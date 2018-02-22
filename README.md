@@ -1,0 +1,2 @@
+# Rapidminer
+Studienprojekt Steamcrawler/Sentimentanalyse
