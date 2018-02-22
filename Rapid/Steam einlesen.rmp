@@ -1,0 +1,1759 @@
+<?xml version="1.0" encoding="UTF-8"?><process version="8.0.001">
+  <context>
+    <input/>
+    <output/>
+    <macros/>
+  </context>
+  <operator activated="true" class="process" compatibility="8.0.001" expanded="true" name="Process">
+    <parameter key="logverbosity" value="init"/>
+    <parameter key="random_seed" value="2001"/>
+    <parameter key="send_mail" value="never"/>
+    <parameter key="notification_email" value=""/>
+    <parameter key="process_duration_for_mail" value="30"/>
+    <parameter key="encoding" value="SYSTEM"/>
+    <process expanded="true">
+      <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="124" name="Alt Komments" width="90" x="313" y="85">
+        <process expanded="true">
+          <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="SteamCrawler" width="90" x="179" y="34">
+            <process expanded="true">
+              <operator activated="true" class="set_macro" compatibility="8.0.001" expanded="true" height="82" name="Set Macro" width="90" x="246" y="85">
+                <parameter key="macro" value="offset"/>
+                <parameter key="value" value="0"/>
+                <description align="center" color="transparent" colored="false" width="126">Hochz&amp;#228;hlendes Macro f&amp;#252;r den Query-Parameter</description>
+              </operator>
+              <operator activated="true" class="concurrency:loop" compatibility="8.0.001" expanded="true" height="103" name="Loop" width="90" x="447" y="34">
+                <parameter key="number_of_iterations" value="96"/>
+                <parameter key="iteration_macro" value="iteration"/>
+                <parameter key="reuse_results" value="false"/>
+                <parameter key="enable_parallel_execution" value="false"/>
+                <process expanded="true">
+                  <operator activated="true" class="web:get_webpage" compatibility="7.3.000" expanded="true" height="68" name="Get Page" width="90" x="581" y="34">
+                    <parameter key="url" value="http://store.steampowered.com/appreviews/8500?json=1"/>
+                    <parameter key="random_user_agent" value="false"/>
+                    <parameter key="connection_timeout" value="10000"/>
+                    <parameter key="read_timeout" value="10000"/>
+                    <parameter key="follow_redirects" value="true"/>
+                    <parameter key="accept_cookies" value="none"/>
+                    <parameter key="cookie_scope" value="global"/>
+                    <parameter key="request_method" value="GET"/>
+                    <list key="query_parameters">
+                      <parameter key="filter" value="recent"/>
+                      <parameter key="language" value="german"/>
+                      <parameter key="day_range" value="all"/>
+                      <parameter key="start_offset" value="%{offset}"/>
+                      <parameter key="review_type" value="all"/>
+                      <parameter key="purchase_type" value="all"/>
+                    </list>
+                    <list key="request_properties"/>
+                    <parameter key="override_encoding" value="false"/>
+                    <parameter key="encoding" value="SYSTEM"/>
+                    <description align="center" color="transparent" colored="false" width="126">Kommentare von der Steam-API abholen</description>
+                  </operator>
+                  <operator activated="true" class="generate_macro" compatibility="8.0.001" expanded="true" height="82" name="Generate Macro" width="90" x="179" y="34">
+                    <list key="function_descriptions">
+                      <parameter key="offset" value="eval(%{iteration})*20"/>
+                    </list>
+                    <description align="center" color="transparent" colored="false" width="126">Hochz&amp;#228;hlendes Macro f&amp;#252;r den Query-Parameter</description>
+                  </operator>
+                  <connect from_port="input 2" to_op="Generate Macro" to_port="through 1"/>
+                  <connect from_op="Get Page" from_port="output" to_port="output 1"/>
+                  <portSpacing port="source_input 1" spacing="0"/>
+                  <portSpacing port="source_input 2" spacing="0"/>
+                  <portSpacing port="source_input 3" spacing="0"/>
+                  <portSpacing port="sink_output 1" spacing="0"/>
+                  <portSpacing port="sink_output 2" spacing="0"/>
+                </process>
+                <description align="center" color="transparent" colored="false" width="126">Holt bei jedem durchlauf die n&amp;#228;chsten 20 Kommentare von der Steam-API</description>
+              </operator>
+              <connect from_port="in 1" to_op="Loop" to_port="input 1"/>
+              <connect from_port="in 2" to_op="Set Macro" to_port="through 1"/>
+              <connect from_op="Set Macro" from_port="through 1" to_op="Loop" to_port="input 2"/>
+              <connect from_op="Loop" from_port="output 1" to_port="out 1"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="source_in 3" spacing="0"/>
+              <portSpacing port="sink_out 1" spacing="0"/>
+              <portSpacing port="sink_out 2" spacing="0"/>
+            </process>
+            <description align="center" color="transparent" colored="false" width="126">Holt sich die ganzen Steam Kommentare</description>
+          </operator>
+          <operator activated="true" class="multiply" compatibility="8.0.001" expanded="true" height="103" name="Multiply" width="90" x="313" y="34"/>
+          <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Bewertungen" width="90" x="447" y="238">
+            <process expanded="true">
+              <operator activated="true" class="text:process_documents" compatibility="7.5.000" expanded="true" height="103" name="Kommentare Seperieren" width="90" x="45" y="34">
+                <parameter key="create_word_vector" value="false"/>
+                <parameter key="vector_creation" value="Term Occurrences"/>
+                <parameter key="add_meta_information" value="false"/>
+                <parameter key="keep_text" value="true"/>
+                <parameter key="prune_method" value="none"/>
+                <parameter key="prune_below_percent" value="3.0"/>
+                <parameter key="prune_above_percent" value="30.0"/>
+                <parameter key="prune_below_rank" value="0.05"/>
+                <parameter key="prune_above_rank" value="0.95"/>
+                <parameter key="datamanagement" value="double_sparse_array"/>
+                <parameter key="data_management" value="auto"/>
+                <process expanded="true">
+                  <operator activated="true" class="text:tokenize" compatibility="7.5.000" expanded="true" height="68" name="Tokenize (6)" width="90" x="514" y="34">
+                    <parameter key="mode" value="regular expression"/>
+                    <parameter key="characters" value=".:"/>
+                    <parameter key="expression" value="recommendationid"/>
+                    <parameter key="language" value="English"/>
+                    <parameter key="max_token_length" value="3"/>
+                    <description align="center" color="transparent" colored="false" width="126">Zerlegt das Dokument in die Einzelnen Kommentare</description>
+                  </operator>
+                  <connect from_port="document" to_op="Tokenize (6)" to_port="document"/>
+                  <connect from_op="Tokenize (6)" from_port="document" to_port="document 1"/>
+                  <portSpacing port="source_document" spacing="0"/>
+                  <portSpacing port="sink_document 1" spacing="0"/>
+                  <portSpacing port="sink_document 2" spacing="0"/>
+                </process>
+                <description align="center" color="transparent" colored="false" width="126">Zerlegt das Dokument in die Einzelnen Kommentare</description>
+              </operator>
+              <operator activated="true" class="multiply" compatibility="8.0.001" expanded="true" height="103" name="Multiply (2)" width="90" x="179" y="34"/>
+              <operator activated="true" class="text:wordlist_to_data" compatibility="7.5.000" expanded="true" height="82" name="WordList to Data" width="90" x="313" y="85">
+                <description align="center" color="transparent" colored="false" width="126">Datenkonvertierung f&amp;#252;r die Sentimentanalyze</description>
+              </operator>
+              <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="82" name="Sentimentanalyse" width="90" x="447" y="85">
+                <process expanded="true">
+                  <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Vorbereitung" width="90" x="112" y="34">
+                    <process expanded="true">
+                      <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Wortliste" width="90" x="45" y="238">
+                        <process expanded="true">
+                          <operator activated="true" class="read_excel" compatibility="8.0.001" expanded="true" height="68" name="Positive Wortliste" width="90" x="45" y="85">
+                            <parameter key="excel_file" value="C:\Users\lp_ontour\.RapidMiner\repositories\Local Repository\data\Wortlisten\Wortliste DeutschTest.xlsx"/>
+                            <parameter key="sheet_number" value="1"/>
+                            <parameter key="imported_cell_range" value="A1"/>
+                            <parameter key="encoding" value="SYSTEM"/>
+                            <parameter key="first_row_as_names" value="true"/>
+                            <list key="annotations"/>
+                            <parameter key="date_format" value=""/>
+                            <parameter key="time_zone" value="SYSTEM"/>
+                            <parameter key="locale" value="English (United States)"/>
+                            <list key="data_set_meta_data_information"/>
+                            <parameter key="read_not_matching_values_as_missings" value="true"/>
+                            <parameter key="datamanagement" value="double_array"/>
+                            <parameter key="data_management" value="auto"/>
+                            <description align="center" color="transparent" colored="false" width="126">Holt die gesamte Wortliste</description>
+                          </operator>
+                          <operator activated="true" class="multiply" compatibility="8.0.001" expanded="true" height="103" name="Multiply (15)" width="90" x="179" y="85"/>
+                          <operator activated="true" class="text:data_to_documents" compatibility="7.5.000" expanded="true" height="68" name="Data to Documents (11)" width="90" x="313" y="34">
+                            <parameter key="select_attributes_and_weights" value="true"/>
+                            <list key="specify_weights">
+                              <parameter key="term" value="1.0"/>
+                            </list>
+                          </operator>
+                          <operator activated="true" class="text:process_documents" compatibility="7.5.000" expanded="true" height="103" name="Process Documents (9)" width="90" x="447" y="34">
+                            <parameter key="create_word_vector" value="true"/>
+                            <parameter key="vector_creation" value="TF-IDF"/>
+                            <parameter key="add_meta_information" value="true"/>
+                            <parameter key="keep_text" value="true"/>
+                            <parameter key="prune_method" value="none"/>
+                            <parameter key="prune_below_percent" value="3.0"/>
+                            <parameter key="prune_above_percent" value="30.0"/>
+                            <parameter key="prune_below_rank" value="0.05"/>
+                            <parameter key="prune_above_rank" value="0.95"/>
+                            <parameter key="datamanagement" value="double_sparse_array"/>
+                            <parameter key="data_management" value="auto"/>
+                            <process expanded="true">
+                              <operator activated="true" class="text:transform_cases" compatibility="7.5.000" expanded="true" height="68" name="Transform Cases" width="90" x="514" y="34">
+                                <parameter key="transform_to" value="lower case"/>
+                                <description align="center" color="transparent" colored="false" width="126">Wandelt alles in kleine Buchstaben</description>
+                              </operator>
+                              <connect from_port="document" to_op="Transform Cases" to_port="document"/>
+                              <connect from_op="Transform Cases" from_port="document" to_port="document 1"/>
+                              <portSpacing port="source_document" spacing="0"/>
+                              <portSpacing port="sink_document 1" spacing="0"/>
+                              <portSpacing port="sink_document 2" spacing="0"/>
+                            </process>
+                          </operator>
+                          <operator activated="true" class="generate_id" compatibility="8.0.001" expanded="true" height="82" name="Generate ID" width="90" x="313" y="238">
+                            <parameter key="create_nominal_ids" value="false"/>
+                            <parameter key="offset" value="0"/>
+                            <description align="center" color="transparent" colored="false" width="126">Formatierung f&amp;#252;r die sp&amp;#228;tere Nutzung der Gewichte</description>
+                          </operator>
+                          <connect from_op="Positive Wortliste" from_port="output" to_op="Multiply (15)" to_port="input"/>
+                          <connect from_op="Multiply (15)" from_port="output 1" to_op="Data to Documents (11)" to_port="example set"/>
+                          <connect from_op="Multiply (15)" from_port="output 2" to_op="Generate ID" to_port="example set input"/>
+                          <connect from_op="Data to Documents (11)" from_port="documents" to_op="Process Documents (9)" to_port="documents 1"/>
+                          <connect from_op="Process Documents (9)" from_port="word list" to_port="out 1"/>
+                          <connect from_op="Generate ID" from_port="example set output" to_port="out 2"/>
+                          <portSpacing port="source_in 1" spacing="0"/>
+                          <portSpacing port="sink_out 1" spacing="0"/>
+                          <portSpacing port="sink_out 2" spacing="0"/>
+                          <portSpacing port="sink_out 3" spacing="0"/>
+                          <description align="center" color="yellow" colored="false" height="50" resized="true" width="216" x="313" y="149">Formatierung f&amp;#252;r die Suche der W&amp;#246;rter in den Kommentaren</description>
+                        </process>
+                        <description align="center" color="transparent" colored="false" width="126">Formatiert die Wortliste</description>
+                      </operator>
+                      <operator activated="true" class="generate_attributes" compatibility="8.0.001" expanded="true" height="82" name="Generate Attributes (13)" width="90" x="581" y="340">
+                        <list key="function_descriptions">
+                          <parameter key="term1" value="term"/>
+                          <parameter key="gewicht1" value="gewicht"/>
+                        </list>
+                        <parameter key="keep_all" value="true"/>
+                        <description align="center" color="transparent" colored="false" width="126">Weitere Formatierung f&amp;#252;r die sp&amp;#228;tere Nutzung als Vergleichsliste</description>
+                      </operator>
+                      <operator activated="true" class="generate_attributes" compatibility="8.0.001" expanded="true" height="82" name="Generate Attributes (7)" width="90" x="45" y="34">
+                        <list key="function_descriptions">
+                          <parameter key="text" value="word"/>
+                        </list>
+                        <parameter key="keep_all" value="true"/>
+                      </operator>
+                      <operator activated="true" class="nominal_to_text" compatibility="8.0.001" expanded="true" height="82" name="Nominal to Text" width="90" x="179" y="34">
+                        <parameter key="attribute_filter_type" value="single"/>
+                        <parameter key="attribute" value="text"/>
+                        <parameter key="attributes" value=""/>
+                        <parameter key="use_except_expression" value="false"/>
+                        <parameter key="value_type" value="nominal"/>
+                        <parameter key="use_value_type_exception" value="false"/>
+                        <parameter key="except_value_type" value="file_path"/>
+                        <parameter key="block_type" value="single_value"/>
+                        <parameter key="use_block_type_exception" value="false"/>
+                        <parameter key="except_block_type" value="single_value"/>
+                        <parameter key="invert_selection" value="false"/>
+                        <parameter key="include_special_attributes" value="false"/>
+                      </operator>
+                      <operator activated="true" class="select_attributes" compatibility="8.0.001" expanded="true" height="82" name="Select Attributes (17)" width="90" x="313" y="34">
+                        <parameter key="attribute_filter_type" value="single"/>
+                        <parameter key="attribute" value="word"/>
+                        <parameter key="attributes" value=""/>
+                        <parameter key="use_except_expression" value="false"/>
+                        <parameter key="value_type" value="attribute_value"/>
+                        <parameter key="use_value_type_exception" value="false"/>
+                        <parameter key="except_value_type" value="time"/>
+                        <parameter key="block_type" value="attribute_block"/>
+                        <parameter key="use_block_type_exception" value="false"/>
+                        <parameter key="except_block_type" value="value_matrix_row_start"/>
+                        <parameter key="invert_selection" value="true"/>
+                        <parameter key="include_special_attributes" value="false"/>
+                      </operator>
+                      <operator activated="true" class="set_role" compatibility="8.0.001" expanded="true" height="82" name="Set Role" width="90" x="447" y="34">
+                        <parameter key="attribute_name" value="text"/>
+                        <parameter key="target_role" value="regular"/>
+                        <list key="set_additional_roles"/>
+                      </operator>
+                      <operator activated="true" class="text:process_document_from_data" compatibility="7.5.000" expanded="true" height="82" name="Process Documents from Data (9)" width="90" x="581" y="136">
+                        <parameter key="create_word_vector" value="true"/>
+                        <parameter key="vector_creation" value="Term Occurrences"/>
+                        <parameter key="add_meta_information" value="false"/>
+                        <parameter key="keep_text" value="true"/>
+                        <parameter key="prune_method" value="none"/>
+                        <parameter key="prune_below_percent" value="3.0"/>
+                        <parameter key="prune_above_percent" value="30.0"/>
+                        <parameter key="prune_below_rank" value="0.05"/>
+                        <parameter key="prune_above_rank" value="0.95"/>
+                        <parameter key="datamanagement" value="double_sparse_array"/>
+                        <parameter key="data_management" value="auto"/>
+                        <parameter key="select_attributes_and_weights" value="false"/>
+                        <list key="specify_weights"/>
+                        <process expanded="true">
+                          <operator activated="true" class="text:tokenize" compatibility="7.5.000" expanded="true" height="68" name="Tokenize (16)" width="90" x="313" y="34">
+                            <parameter key="mode" value="non letters"/>
+                            <parameter key="characters" value="\s"/>
+                            <parameter key="language" value="English"/>
+                            <parameter key="max_token_length" value="3"/>
+                          </operator>
+                          <operator activated="true" class="text:filter_by_length" compatibility="7.5.000" expanded="true" height="68" name="Filter Tokens (25)" width="90" x="447" y="34">
+                            <parameter key="min_chars" value="1"/>
+                            <parameter key="max_chars" value="9999"/>
+                          </operator>
+                          <operator activated="true" class="text:transform_cases" compatibility="7.5.000" expanded="true" height="68" name="Transform Cases (18)" width="90" x="581" y="34">
+                            <parameter key="transform_to" value="lower case"/>
+                          </operator>
+                          <connect from_port="document" to_op="Tokenize (16)" to_port="document"/>
+                          <connect from_op="Tokenize (16)" from_port="document" to_op="Filter Tokens (25)" to_port="document"/>
+                          <connect from_op="Filter Tokens (25)" from_port="document" to_op="Transform Cases (18)" to_port="document"/>
+                          <connect from_op="Transform Cases (18)" from_port="document" to_port="document 1"/>
+                          <portSpacing port="source_document" spacing="0"/>
+                          <portSpacing port="sink_document 1" spacing="0"/>
+                          <portSpacing port="sink_document 2" spacing="0"/>
+                          <description align="center" color="yellow" colored="false" height="50" resized="true" width="180" x="394" y="121">Einteilung in einzelne W&amp;#246;rter</description>
+                        </process>
+                        <description align="center" color="transparent" colored="false" width="126">Suche nach den W&amp;#246;rter aus der Wortliste in den Kommentaren</description>
+                      </operator>
+                      <connect from_port="in 1" to_op="Generate Attributes (7)" to_port="example set input"/>
+                      <connect from_op="Wortliste" from_port="out 1" to_op="Process Documents from Data (9)" to_port="word list"/>
+                      <connect from_op="Wortliste" from_port="out 2" to_op="Generate Attributes (13)" to_port="example set input"/>
+                      <connect from_op="Generate Attributes (13)" from_port="example set output" to_port="out 2"/>
+                      <connect from_op="Generate Attributes (7)" from_port="example set output" to_op="Nominal to Text" to_port="example set input"/>
+                      <connect from_op="Nominal to Text" from_port="example set output" to_op="Select Attributes (17)" to_port="example set input"/>
+                      <connect from_op="Select Attributes (17)" from_port="example set output" to_op="Set Role" to_port="example set input"/>
+                      <connect from_op="Set Role" from_port="example set output" to_op="Process Documents from Data (9)" to_port="example set"/>
+                      <connect from_op="Process Documents from Data (9)" from_port="example set" to_port="out 1"/>
+                      <portSpacing port="source_in 1" spacing="0"/>
+                      <portSpacing port="source_in 2" spacing="0"/>
+                      <portSpacing port="sink_out 1" spacing="0"/>
+                      <portSpacing port="sink_out 2" spacing="0"/>
+                      <portSpacing port="sink_out 3" spacing="0"/>
+                      <description align="center" color="yellow" colored="false" height="50" resized="true" width="133" x="205" y="126">Formatierungen f&amp;#252;r die Kommentare</description>
+                    </process>
+                    <description align="center" color="transparent" colored="false" width="126">Vorbereitung der Daten(Tabellen) f&amp;#252;r die Analyse</description>
+                  </operator>
+                  <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Verarbeitung" width="90" x="380" y="34">
+                    <process expanded="true">
+                      <operator activated="true" class="concurrency:loop_attributes" compatibility="8.0.001" expanded="true" height="103" name="Loop Attributes (2)" width="90" x="45" y="34">
+                        <parameter key="attribute_filter_type" value="single"/>
+                        <parameter key="attribute" value="text"/>
+                        <parameter key="attributes" value=""/>
+                        <parameter key="regular_expression" value="loop_valueterm"/>
+                        <parameter key="use_except_expression" value="false"/>
+                        <parameter key="value_type" value="attribute_value"/>
+                        <parameter key="use_value_type_exception" value="false"/>
+                        <parameter key="except_value_type" value="time"/>
+                        <parameter key="block_type" value="attribute_block"/>
+                        <parameter key="use_block_type_exception" value="false"/>
+                        <parameter key="except_block_type" value="value_matrix_row_start"/>
+                        <parameter key="invert_selection" value="true"/>
+                        <parameter key="include_special_attributes" value="false"/>
+                        <parameter key="attribute_name_macro" value="loop_attribute"/>
+                        <parameter key="reuse_results" value="false"/>
+                        <parameter key="enable_parallel_execution" value="false"/>
+                        <process expanded="true">
+                          <operator activated="true" class="generate_attributes" compatibility="8.0.001" expanded="true" height="82" name="Generate Attributes (10)" width="90" x="179" y="34">
+                            <list key="function_descriptions">
+                              <parameter key="Text3" value="%{loop_attribute}"/>
+                            </list>
+                            <parameter key="keep_all" value="true"/>
+                          </operator>
+                          <operator activated="true" class="concurrency:loop_values" compatibility="8.0.001" expanded="true" height="103" name="Loop Values (4)" width="90" x="581" y="34">
+                            <parameter key="attribute" value="Text3"/>
+                            <parameter key="iteration_macro" value="loop_value"/>
+                            <parameter key="reuse_results" value="false"/>
+                            <parameter key="enable_parallel_execution" value="false"/>
+                            <process expanded="true">
+                              <operator activated="true" class="numerical_to_polynominal" compatibility="8.0.001" expanded="true" height="82" name="Numerical to Polynominal" width="90" x="112" y="85">
+                                <parameter key="attribute_filter_type" value="single"/>
+                                <parameter key="attribute" value="id"/>
+                                <parameter key="attributes" value=""/>
+                                <parameter key="use_except_expression" value="false"/>
+                                <parameter key="value_type" value="numeric"/>
+                                <parameter key="use_value_type_exception" value="false"/>
+                                <parameter key="except_value_type" value="real"/>
+                                <parameter key="block_type" value="value_series"/>
+                                <parameter key="use_block_type_exception" value="false"/>
+                                <parameter key="except_block_type" value="value_series_end"/>
+                                <parameter key="invert_selection" value="false"/>
+                                <parameter key="include_special_attributes" value="true"/>
+                              </operator>
+                              <operator activated="true" class="concurrency:loop_values" compatibility="8.0.001" expanded="true" height="103" name="Loop Values (5)" width="90" x="514" y="34">
+                                <parameter key="attribute" value="id"/>
+                                <parameter key="iteration_macro" value="loop_valueterm"/>
+                                <parameter key="reuse_results" value="false"/>
+                                <parameter key="enable_parallel_execution" value="false"/>
+                                <process expanded="true">
+                                  <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Macros" width="90" x="179" y="34">
+                                    <process expanded="true">
+                                      <operator activated="true" class="extract_macro" compatibility="8.0.001" expanded="true" height="68" name="Extract Macro" width="90" x="246" y="136">
+                                        <parameter key="macro" value="sGewicht"/>
+                                        <parameter key="macro_type" value="data_value"/>
+                                        <parameter key="statistics" value="average"/>
+                                        <parameter key="attribute_name" value="gewicht1"/>
+                                        <parameter key="example_index" value="%{loop_valueterm}"/>
+                                        <list key="additional_macros"/>
+                                      </operator>
+                                      <operator activated="true" class="extract_macro" compatibility="8.0.001" expanded="true" height="68" name="Extract Macro (2)" width="90" x="380" y="136">
+                                        <parameter key="macro" value="sTerm"/>
+                                        <parameter key="macro_type" value="data_value"/>
+                                        <parameter key="statistics" value="average"/>
+                                        <parameter key="attribute_name" value="term1"/>
+                                        <parameter key="example_index" value="%{loop_valueterm}"/>
+                                        <list key="additional_macros"/>
+                                      </operator>
+                                      <operator activated="true" class="extract_macro" compatibility="8.0.001" expanded="true" height="68" name="Extract Macro (5)" width="90" x="380" y="34">
+                                        <parameter key="macro" value="Text3Name"/>
+                                        <parameter key="macro_type" value="data_value"/>
+                                        <parameter key="statistics" value="average"/>
+                                        <parameter key="attribute_name" value="Text3"/>
+                                        <parameter key="example_index" value="%{loop_valueterm}"/>
+                                        <list key="additional_macros"/>
+                                      </operator>
+                                      <operator activated="true" class="generate_macro" compatibility="8.0.001" expanded="true" height="103" name="Generate Macro (3)" width="90" x="514" y="85">
+                                        <list key="function_descriptions">
+                                          <parameter key="replaceValue" value="eval(%{sGewicht})"/>
+                                        </list>
+                                      </operator>
+                                      <connect from_port="in 1" to_op="Extract Macro (5)" to_port="example set"/>
+                                      <connect from_port="in 2" to_op="Extract Macro" to_port="example set"/>
+                                      <connect from_op="Extract Macro" from_port="example set" to_op="Extract Macro (2)" to_port="example set"/>
+                                      <connect from_op="Extract Macro (2)" from_port="example set" to_op="Generate Macro (3)" to_port="through 2"/>
+                                      <connect from_op="Extract Macro (5)" from_port="example set" to_op="Generate Macro (3)" to_port="through 1"/>
+                                      <connect from_op="Generate Macro (3)" from_port="through 1" to_port="out 1"/>
+                                      <connect from_op="Generate Macro (3)" from_port="through 2" to_port="out 2"/>
+                                      <portSpacing port="source_in 1" spacing="0"/>
+                                      <portSpacing port="source_in 2" spacing="0"/>
+                                      <portSpacing port="source_in 3" spacing="0"/>
+                                      <portSpacing port="sink_out 1" spacing="0"/>
+                                      <portSpacing port="sink_out 2" spacing="0"/>
+                                      <portSpacing port="sink_out 3" spacing="0"/>
+                                      <description align="center" color="yellow" colored="false" height="50" resized="true" width="176" x="349" y="221">Macros f&amp;#252;r Vergleiche und Ersetzungen</description>
+                                    </process>
+                                    <description align="center" color="transparent" colored="false" width="126">Macros f&amp;#252;r die Verarbeitung</description>
+                                  </operator>
+                                  <operator activated="true" class="branch" compatibility="8.0.001" expanded="true" height="103" name="Branch" width="90" x="380" y="34">
+                                    <parameter key="condition_type" value="expression"/>
+                                    <parameter key="expression" value="%{sTerm}==%{loop_attribute}"/>
+                                    <parameter key="io_object" value="ANOVAMatrix"/>
+                                    <parameter key="return_inner_output" value="true"/>
+                                    <process expanded="true">
+                                      <operator activated="true" class="generate_attributes" compatibility="8.0.001" expanded="true" height="82" name="Generate Attributes (14)" width="90" x="112" y="34">
+                                        <list key="function_descriptions">
+                                          <parameter key="%{sTerm}gewichtet" value="eval(%{loop_value})*eval(%{sGewicht})"/>
+                                        </list>
+                                        <parameter key="keep_all" value="true"/>
+                                      </operator>
+                                      <connect from_port="input 1" to_op="Generate Attributes (14)" to_port="example set input"/>
+                                      <connect from_op="Generate Attributes (14)" from_port="example set output" to_port="input 1"/>
+                                      <portSpacing port="source_condition" spacing="0"/>
+                                      <portSpacing port="source_input 1" spacing="0"/>
+                                      <portSpacing port="source_input 2" spacing="0"/>
+                                      <portSpacing port="sink_input 1" spacing="0"/>
+                                      <portSpacing port="sink_input 2" spacing="0"/>
+                                    </process>
+                                    <process expanded="true">
+                                      <connect from_port="input 1" to_port="input 1"/>
+                                      <portSpacing port="source_condition" spacing="0"/>
+                                      <portSpacing port="source_input 1" spacing="0"/>
+                                      <portSpacing port="source_input 2" spacing="0"/>
+                                      <portSpacing port="sink_input 1" spacing="0"/>
+                                      <portSpacing port="sink_input 2" spacing="0"/>
+                                    </process>
+                                    <description align="center" color="transparent" colored="false" width="126">Einsetzen der (Gewichte * Termh&amp;#228;ufigkeit)</description>
+                                  </operator>
+                                  <operator activated="true" class="select_attributes" compatibility="8.0.001" expanded="true" height="82" name="Select Attributes (19)" width="90" x="581" y="34">
+                                    <parameter key="attribute_filter_type" value="single"/>
+                                    <parameter key="attribute" value="Text3"/>
+                                    <parameter key="attributes" value="|Text3|sTerm"/>
+                                    <parameter key="use_except_expression" value="false"/>
+                                    <parameter key="value_type" value="attribute_value"/>
+                                    <parameter key="use_value_type_exception" value="false"/>
+                                    <parameter key="except_value_type" value="time"/>
+                                    <parameter key="block_type" value="attribute_block"/>
+                                    <parameter key="use_block_type_exception" value="false"/>
+                                    <parameter key="except_block_type" value="value_matrix_row_start"/>
+                                    <parameter key="invert_selection" value="true"/>
+                                    <parameter key="include_special_attributes" value="false"/>
+                                  </operator>
+                                  <operator activated="true" class="select_attributes" compatibility="8.0.001" expanded="true" height="82" name="Select Attributes (20)" width="90" x="715" y="34">
+                                    <parameter key="attribute_filter_type" value="single"/>
+                                    <parameter key="attribute" value="%{sTerm}"/>
+                                    <parameter key="attributes" value="|Text3|sTerm"/>
+                                    <parameter key="regular_expression" value="sTerm"/>
+                                    <parameter key="use_except_expression" value="false"/>
+                                    <parameter key="value_type" value="attribute_value"/>
+                                    <parameter key="use_value_type_exception" value="false"/>
+                                    <parameter key="except_value_type" value="time"/>
+                                    <parameter key="block_type" value="attribute_block"/>
+                                    <parameter key="use_block_type_exception" value="false"/>
+                                    <parameter key="except_block_type" value="value_matrix_row_start"/>
+                                    <parameter key="invert_selection" value="true"/>
+                                    <parameter key="include_special_attributes" value="true"/>
+                                  </operator>
+                                  <connect from_port="input 1" to_op="Macros" to_port="in 2"/>
+                                  <connect from_port="input 2" to_op="Macros" to_port="in 1"/>
+                                  <connect from_op="Macros" from_port="out 1" to_op="Branch" to_port="input 1"/>
+                                  <connect from_op="Macros" from_port="out 2" to_op="Branch" to_port="condition"/>
+                                  <connect from_op="Branch" from_port="input 1" to_op="Select Attributes (19)" to_port="example set input"/>
+                                  <connect from_op="Select Attributes (19)" from_port="example set output" to_op="Select Attributes (20)" to_port="example set input"/>
+                                  <connect from_op="Select Attributes (20)" from_port="example set output" to_port="output 1"/>
+                                  <portSpacing port="source_input 1" spacing="0"/>
+                                  <portSpacing port="source_input 2" spacing="0"/>
+                                  <portSpacing port="source_input 3" spacing="0"/>
+                                  <portSpacing port="sink_output 1" spacing="0"/>
+                                  <portSpacing port="sink_output 2" spacing="0"/>
+                                  <description align="center" color="yellow" colored="false" height="50" resized="true" width="146" x="625" y="129">L&amp;#246;schen &amp;#252;berfl&amp;#252;ssiger Attribute</description>
+                                </process>
+                                <description align="center" color="transparent" colored="false" width="126">Geht die Values der Wortliste durch</description>
+                              </operator>
+                              <connect from_port="input 1" to_op="Loop Values (5)" to_port="input 2"/>
+                              <connect from_port="input 2" to_op="Numerical to Polynominal" to_port="example set input"/>
+                              <connect from_op="Numerical to Polynominal" from_port="example set output" to_op="Loop Values (5)" to_port="input 1"/>
+                              <connect from_op="Loop Values (5)" from_port="output 1" to_port="output 1"/>
+                              <portSpacing port="source_input 1" spacing="0"/>
+                              <portSpacing port="source_input 2" spacing="0"/>
+                              <portSpacing port="source_input 3" spacing="0"/>
+                              <portSpacing port="sink_output 1" spacing="0"/>
+                              <portSpacing port="sink_output 2" spacing="0"/>
+                            </process>
+                            <description align="center" color="transparent" colored="false" width="126">Durchlaufen der Values der Kommentare</description>
+                          </operator>
+                          <connect from_port="input 1" to_op="Generate Attributes (10)" to_port="example set input"/>
+                          <connect from_port="input 2" to_op="Loop Values (4)" to_port="input 2"/>
+                          <connect from_op="Generate Attributes (10)" from_port="example set output" to_op="Loop Values (4)" to_port="input 1"/>
+                          <connect from_op="Loop Values (4)" from_port="output 1" to_port="output 1"/>
+                          <portSpacing port="source_input 1" spacing="0"/>
+                          <portSpacing port="source_input 2" spacing="0"/>
+                          <portSpacing port="source_input 3" spacing="0"/>
+                          <portSpacing port="sink_output 1" spacing="0"/>
+                          <portSpacing port="sink_output 2" spacing="0"/>
+                        </process>
+                        <description align="center" color="transparent" colored="false" width="126">Durchlaufen und Vergleichen der Kommentare und Wortliste(Attribute der Kommentare mit Termh&amp;#228;ufigkeit)</description>
+                      </operator>
+                      <operator activated="true" class="flatten_collection" compatibility="8.0.001" expanded="true" height="68" name="Flatten Collection" width="90" x="179" y="34"/>
+                      <operator activated="true" class="loop_collection" compatibility="8.0.001" expanded="true" height="68" name="Loop Collection" width="90" x="313" y="34">
+                        <parameter key="set_iteration_macro" value="true"/>
+                        <parameter key="macro_name" value="iteration"/>
+                        <parameter key="macro_start_value" value="1"/>
+                        <parameter key="unfold" value="false"/>
+                        <process expanded="true">
+                          <operator activated="true" class="generate_id" compatibility="8.0.001" expanded="true" height="82" name="Generate ID (3)" width="90" x="112" y="34">
+                            <parameter key="create_nominal_ids" value="false"/>
+                            <parameter key="offset" value="0"/>
+                          </operator>
+                          <operator activated="true" class="multiply" compatibility="8.0.001" expanded="true" height="82" name="Multiply (17)" width="90" x="246" y="34"/>
+                          <operator activated="true" class="branch" compatibility="8.0.001" expanded="true" height="82" name="Branch (2)" width="90" x="380" y="34">
+                            <parameter key="condition_type" value="expression"/>
+                            <parameter key="expression" value="eval(%{iteration})==1"/>
+                            <parameter key="io_object" value="ANOVAMatrix"/>
+                            <parameter key="return_inner_output" value="true"/>
+                            <process expanded="true">
+                              <operator activated="true" class="remember" compatibility="8.0.001" expanded="true" height="68" name="Remember" width="90" x="179" y="34">
+                                <parameter key="name" value="exampleset"/>
+                                <parameter key="io_object" value="ExampleSet"/>
+                                <parameter key="store_which" value="1"/>
+                                <parameter key="remove_from_process" value="true"/>
+                                <description align="center" color="transparent" colored="false" width="126">Speichert das Exapleset als Globale Variable</description>
+                              </operator>
+                              <connect from_port="condition" to_op="Remember" to_port="store"/>
+                              <portSpacing port="source_condition" spacing="0"/>
+                              <portSpacing port="source_input 1" spacing="0"/>
+                              <portSpacing port="sink_input 1" spacing="0"/>
+                            </process>
+                            <process expanded="true">
+                              <operator activated="true" class="recall" compatibility="8.0.001" expanded="true" height="68" name="Recall" width="90" x="179" y="34">
+                                <parameter key="name" value="exampleset"/>
+                                <parameter key="io_object" value="ExampleSet"/>
+                                <parameter key="remove_from_store" value="true"/>
+                                <description align="center" color="transparent" colored="false" width="126">Ruft die Globale Variable wieder ab</description>
+                              </operator>
+                              <operator activated="true" class="join" compatibility="8.0.001" expanded="true" height="82" name="Join (7)" width="90" x="313" y="187">
+                                <parameter key="remove_double_attributes" value="true"/>
+                                <parameter key="join_type" value="inner"/>
+                                <parameter key="use_id_attribute_as_key" value="true"/>
+                                <list key="key_attributes"/>
+                                <parameter key="keep_both_join_attributes" value="false"/>
+                                <description align="center" color="transparent" colored="false" width="126">H&amp;#228;ngt die neuen Werte an</description>
+                              </operator>
+                              <operator activated="true" class="remember" compatibility="8.0.001" expanded="true" height="68" name="Remember (2)" width="90" x="447" y="187">
+                                <parameter key="name" value="exampleset"/>
+                                <parameter key="io_object" value="ExampleSet"/>
+                                <parameter key="store_which" value="1"/>
+                                <parameter key="remove_from_process" value="true"/>
+                              </operator>
+                              <connect from_port="condition" to_op="Join (7)" to_port="right"/>
+                              <connect from_op="Recall" from_port="result" to_op="Join (7)" to_port="left"/>
+                              <connect from_op="Join (7)" from_port="join" to_op="Remember (2)" to_port="store"/>
+                              <portSpacing port="source_condition" spacing="0"/>
+                              <portSpacing port="source_input 1" spacing="0"/>
+                              <portSpacing port="sink_input 1" spacing="0"/>
+                            </process>
+                            <description align="center" color="transparent" colored="false" width="126">Im ersten Durchlauf speichert er nur, ab da wird angeh&amp;#228;ngt</description>
+                          </operator>
+                          <connect from_port="single" to_op="Generate ID (3)" to_port="example set input"/>
+                          <connect from_op="Generate ID (3)" from_port="example set output" to_op="Multiply (17)" to_port="input"/>
+                          <connect from_op="Multiply (17)" from_port="output 1" to_op="Branch (2)" to_port="condition"/>
+                          <portSpacing port="source_single" spacing="0"/>
+                          <portSpacing port="sink_output 1" spacing="0"/>
+                        </process>
+                        <description align="center" color="transparent" colored="false" width="126">Macht aus der Collection ein Exampleset</description>
+                      </operator>
+                      <connect from_port="in 1" to_op="Loop Attributes (2)" to_port="input 1"/>
+                      <connect from_port="in 2" to_op="Loop Attributes (2)" to_port="input 2"/>
+                      <connect from_op="Loop Attributes (2)" from_port="output 1" to_op="Flatten Collection" to_port="collection"/>
+                      <connect from_op="Flatten Collection" from_port="flat" to_op="Loop Collection" to_port="collection"/>
+                      <portSpacing port="source_in 1" spacing="0"/>
+                      <portSpacing port="source_in 2" spacing="0"/>
+                      <portSpacing port="source_in 3" spacing="0"/>
+                      <portSpacing port="sink_out 1" spacing="0"/>
+                    </process>
+                    <description align="center" color="transparent" colored="false" width="126">Die eigentliche Verarbeitung</description>
+                  </operator>
+                  <operator activated="true" class="recall" compatibility="8.0.001" expanded="true" height="68" name="Recall (2)" width="90" x="514" y="34">
+                    <parameter key="name" value="exampleset"/>
+                    <parameter key="io_object" value="ExampleSet"/>
+                    <parameter key="remove_from_store" value="true"/>
+                    <description align="center" color="transparent" colored="false" width="126">Ruft das fertige Exapleset ab</description>
+                  </operator>
+                  <operator activated="true" class="generate_aggregation" compatibility="8.0.001" expanded="true" height="82" name="Generate Aggregation (9)" width="90" x="648" y="34">
+                    <parameter key="attribute_name" value="gesammtbewerung"/>
+                    <parameter key="attribute_filter_type" value="regular_expression"/>
+                    <parameter key="attribute" value=""/>
+                    <parameter key="attributes" value="id|text|games|super"/>
+                    <parameter key="regular_expression" value=".*gewichtet"/>
+                    <parameter key="use_except_expression" value="false"/>
+                    <parameter key="value_type" value="attribute_value"/>
+                    <parameter key="use_value_type_exception" value="false"/>
+                    <parameter key="except_value_type" value="time"/>
+                    <parameter key="block_type" value="attribute_block"/>
+                    <parameter key="use_block_type_exception" value="false"/>
+                    <parameter key="except_block_type" value="value_matrix_row_start"/>
+                    <parameter key="invert_selection" value="false"/>
+                    <parameter key="include_special_attributes" value="true"/>
+                    <parameter key="aggregation_function" value="sum"/>
+                    <parameter key="keep_all" value="true"/>
+                    <parameter key="ignore_missings" value="true"/>
+                    <parameter key="ignore_missing_attributes" value="false"/>
+                    <description align="center" color="transparent" colored="false" width="126">Verrechnet die Stimmungen zu Gesamtwerten</description>
+                  </operator>
+                  <operator activated="true" class="select_attributes" compatibility="8.0.001" expanded="true" height="82" name="Select Attributes (21)" width="90" x="782" y="34">
+                    <parameter key="attribute_filter_type" value="subset"/>
+                    <parameter key="attribute" value=""/>
+                    <parameter key="attributes" value="text|id|gesammtbewerung"/>
+                    <parameter key="use_except_expression" value="false"/>
+                    <parameter key="value_type" value="attribute_value"/>
+                    <parameter key="use_value_type_exception" value="false"/>
+                    <parameter key="except_value_type" value="time"/>
+                    <parameter key="block_type" value="attribute_block"/>
+                    <parameter key="use_block_type_exception" value="false"/>
+                    <parameter key="except_block_type" value="value_matrix_row_start"/>
+                    <parameter key="invert_selection" value="false"/>
+                    <parameter key="include_special_attributes" value="true"/>
+                    <description align="center" color="transparent" colored="false" width="126">L&amp;#246;scht wieder unn&amp;#246;tige Attribute</description>
+                  </operator>
+                  <connect from_port="in 1" to_op="Vorbereitung" to_port="in 1"/>
+                  <connect from_op="Vorbereitung" from_port="out 1" to_op="Verarbeitung" to_port="in 1"/>
+                  <connect from_op="Vorbereitung" from_port="out 2" to_op="Verarbeitung" to_port="in 2"/>
+                  <connect from_op="Recall (2)" from_port="result" to_op="Generate Aggregation (9)" to_port="example set input"/>
+                  <connect from_op="Generate Aggregation (9)" from_port="example set output" to_op="Select Attributes (21)" to_port="example set input"/>
+                  <connect from_op="Select Attributes (21)" from_port="example set output" to_port="out 1"/>
+                  <portSpacing port="source_in 1" spacing="0"/>
+                  <portSpacing port="source_in 2" spacing="0"/>
+                  <portSpacing port="sink_out 1" spacing="0"/>
+                  <portSpacing port="sink_out 2" spacing="0"/>
+                </process>
+                <description align="center" color="transparent" colored="false" width="126">Deutsche Sentimentanalyse</description>
+              </operator>
+              <operator activated="true" class="text:data_to_documents" compatibility="7.5.000" expanded="true" height="68" name="Data to Documents (4)" width="90" x="581" y="85">
+                <parameter key="select_attributes_and_weights" value="false"/>
+                <list key="specify_weights"/>
+              </operator>
+              <operator activated="true" class="collect" compatibility="8.0.001" expanded="true" height="82" name="Collect (2)" width="90" x="715" y="85">
+                <parameter key="unfold" value="false"/>
+              </operator>
+              <operator activated="true" class="flatten_collection" compatibility="8.0.001" expanded="true" height="68" name="Flatten Collection (2)" width="90" x="849" y="85"/>
+              <connect from_port="in 1" to_op="Kommentare Seperieren" to_port="documents 1"/>
+              <connect from_op="Kommentare Seperieren" from_port="word list" to_op="Multiply (2)" to_port="input"/>
+              <connect from_op="Multiply (2)" from_port="output 1" to_port="out 1"/>
+              <connect from_op="Multiply (2)" from_port="output 2" to_op="WordList to Data" to_port="word list"/>
+              <connect from_op="WordList to Data" from_port="example set" to_op="Sentimentanalyse" to_port="in 1"/>
+              <connect from_op="Sentimentanalyse" from_port="out 1" to_op="Data to Documents (4)" to_port="example set"/>
+              <connect from_op="Data to Documents (4)" from_port="documents" to_op="Collect (2)" to_port="input 1"/>
+              <connect from_op="Collect (2)" from_port="collection" to_op="Flatten Collection (2)" to_port="collection"/>
+              <connect from_op="Flatten Collection (2)" from_port="flat" to_port="out 2"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="sink_out 1" spacing="0"/>
+              <portSpacing port="sink_out 2" spacing="0"/>
+              <portSpacing port="sink_out 3" spacing="0"/>
+              <description align="center" color="yellow" colored="false" height="50" resized="false" width="111" x="701" y="177">Datentyp- konvertierungen</description>
+            </process>
+            <description align="center" color="transparent" colored="false" width="126">Zerlegt das Dokument in einzelne Kommentare mit Sentimentanalyse</description>
+          </operator>
+          <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Up/Down-Votes" width="90" x="447" y="34">
+            <process expanded="true">
+              <operator activated="true" class="multiply" compatibility="8.0.001" expanded="true" height="103" name="Multiply (3)" width="90" x="112" y="85"/>
+              <operator activated="true" class="text:process_documents" compatibility="7.5.000" expanded="true" height="103" name="Berechnung_Negativ" width="90" x="380" y="187">
+                <parameter key="create_word_vector" value="true"/>
+                <parameter key="vector_creation" value="Term Frequency"/>
+                <parameter key="add_meta_information" value="false"/>
+                <parameter key="keep_text" value="false"/>
+                <parameter key="prune_method" value="none"/>
+                <parameter key="prune_below_percent" value="80.0"/>
+                <parameter key="prune_above_percent" value="95.0"/>
+                <parameter key="prune_below_rank" value="0.05"/>
+                <parameter key="prune_above_rank" value="1.0"/>
+                <parameter key="datamanagement" value="float_sparse_array"/>
+                <parameter key="data_management" value="auto"/>
+                <process expanded="true">
+                  <operator activated="true" class="text:tokenize" compatibility="7.5.000" expanded="true" height="68" name="Tokenize (4)" width="90" x="313" y="34">
+                    <parameter key="mode" value="specify characters"/>
+                    <parameter key="characters" value=","/>
+                    <parameter key="language" value="English"/>
+                    <parameter key="max_token_length" value="3"/>
+                    <description align="center" color="transparent" colored="false" width="126">Zerlegt die Texte in einzelne Abschnitte aus denen sich die Anzahl der UP/Down-Votes ergibt</description>
+                  </operator>
+                  <operator activated="true" class="text:filter_tokens_by_content" compatibility="7.5.000" expanded="true" height="68" name="Filter Tokens (2)" width="90" x="581" y="34">
+                    <parameter key="condition" value="contains"/>
+                    <parameter key="string" value="&quot;voted_up&quot;:false"/>
+                    <parameter key="case_sensitive" value="false"/>
+                    <parameter key="invert condition" value="false"/>
+                    <description align="center" color="transparent" colored="false" width="126">Filterd alle DOWN-Votes</description>
+                  </operator>
+                  <connect from_port="document" to_op="Tokenize (4)" to_port="document"/>
+                  <connect from_op="Tokenize (4)" from_port="document" to_op="Filter Tokens (2)" to_port="document"/>
+                  <connect from_op="Filter Tokens (2)" from_port="document" to_port="document 1"/>
+                  <portSpacing port="source_document" spacing="0"/>
+                  <portSpacing port="sink_document 1" spacing="0"/>
+                  <portSpacing port="sink_document 2" spacing="0"/>
+                </process>
+                <description align="center" color="transparent" colored="false" width="126">Z&amp;#228;hlt die DOWN-Votes</description>
+              </operator>
+              <operator activated="true" class="text:process_documents" compatibility="7.5.000" expanded="true" height="103" name="Berechnung_Positiv" width="90" x="380" y="34">
+                <parameter key="create_word_vector" value="true"/>
+                <parameter key="vector_creation" value="Term Frequency"/>
+                <parameter key="add_meta_information" value="false"/>
+                <parameter key="keep_text" value="false"/>
+                <parameter key="prune_method" value="none"/>
+                <parameter key="prune_below_percent" value="80.0"/>
+                <parameter key="prune_above_percent" value="95.0"/>
+                <parameter key="prune_below_rank" value="0.05"/>
+                <parameter key="prune_above_rank" value="1.0"/>
+                <parameter key="datamanagement" value="float_sparse_array"/>
+                <parameter key="data_management" value="auto"/>
+                <process expanded="true">
+                  <operator activated="true" class="text:tokenize" compatibility="7.5.000" expanded="true" height="68" name="Tokenize (3)" width="90" x="246" y="34">
+                    <parameter key="mode" value="specify characters"/>
+                    <parameter key="characters" value=","/>
+                    <parameter key="language" value="English"/>
+                    <parameter key="max_token_length" value="3"/>
+                    <description align="center" color="transparent" colored="false" width="126">Zerlegt die Texte in einzelne Abschnitte aus denen sich die Anzahl der UP/Down-Votes ergibt</description>
+                  </operator>
+                  <operator activated="true" class="text:filter_tokens_by_content" compatibility="7.5.000" expanded="true" height="68" name="Filter Tokens (by Content)" width="90" x="581" y="34">
+                    <parameter key="condition" value="contains"/>
+                    <parameter key="string" value="&quot;voted_up&quot;:true"/>
+                    <parameter key="case_sensitive" value="false"/>
+                    <parameter key="invert condition" value="false"/>
+                    <description align="center" color="transparent" colored="false" width="126">Filterd alle UP-Votes</description>
+                  </operator>
+                  <connect from_port="document" to_op="Tokenize (3)" to_port="document"/>
+                  <connect from_op="Tokenize (3)" from_port="document" to_op="Filter Tokens (by Content)" to_port="document"/>
+                  <connect from_op="Filter Tokens (by Content)" from_port="document" to_port="document 1"/>
+                  <portSpacing port="source_document" spacing="0"/>
+                  <portSpacing port="sink_document 1" spacing="0"/>
+                  <portSpacing port="sink_document 2" spacing="0"/>
+                </process>
+                <description align="center" color="transparent" colored="false" width="126">Z&amp;#228;hlt die UP-Votes</description>
+              </operator>
+              <connect from_port="in 1" to_op="Multiply (3)" to_port="input"/>
+              <connect from_op="Multiply (3)" from_port="output 1" to_op="Berechnung_Positiv" to_port="documents 1"/>
+              <connect from_op="Multiply (3)" from_port="output 2" to_op="Berechnung_Negativ" to_port="documents 1"/>
+              <connect from_op="Berechnung_Negativ" from_port="word list" to_port="out 2"/>
+              <connect from_op="Berechnung_Positiv" from_port="word list" to_port="out 1"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="sink_out 1" spacing="0"/>
+              <portSpacing port="sink_out 2" spacing="0"/>
+              <portSpacing port="sink_out 3" spacing="0"/>
+            </process>
+            <description align="center" color="transparent" colored="false" width="126">Z&amp;#228;hlt die UP/DOWN-Votes</description>
+          </operator>
+          <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="145" name="Speicher" width="90" x="581" y="34">
+            <process expanded="true">
+              <operator activated="true" class="store" compatibility="8.0.001" expanded="true" height="68" name="Kommentare ohne Bewertungen" width="90" x="447" y="238">
+                <parameter key="repository_entry" value="data/Einzelne Kommentare/Kommentare ohen Analysealt"/>
+              </operator>
+              <operator activated="true" class="store" compatibility="8.0.001" expanded="true" height="68" name="DOWN-Votes (2)" width="90" x="447" y="136">
+                <parameter key="repository_entry" value="data/UP-DOWN-Votes/EVENegativalt"/>
+              </operator>
+              <operator activated="true" class="store" compatibility="8.0.001" expanded="true" height="68" name="UP-Votes (2)" width="90" x="447" y="34">
+                <parameter key="repository_entry" value="data/UP-DOWN-Votes/EVEPositivalt"/>
+              </operator>
+              <operator activated="true" class="store" compatibility="8.0.001" expanded="true" height="68" name="Kommentare mit Analyse" width="90" x="447" y="340">
+                <parameter key="repository_entry" value="data/Einzelne Kommentare/Kommentare mit Analysealt"/>
+              </operator>
+              <connect from_port="in 1" to_op="UP-Votes (2)" to_port="input"/>
+              <connect from_port="in 2" to_op="DOWN-Votes (2)" to_port="input"/>
+              <connect from_port="in 3" to_op="Kommentare ohne Bewertungen" to_port="input"/>
+              <connect from_port="in 4" to_op="Kommentare mit Analyse" to_port="input"/>
+              <connect from_op="Kommentare ohne Bewertungen" from_port="through" to_port="out 3"/>
+              <connect from_op="DOWN-Votes (2)" from_port="through" to_port="out 2"/>
+              <connect from_op="UP-Votes (2)" from_port="through" to_port="out 1"/>
+              <connect from_op="Kommentare mit Analyse" from_port="through" to_port="out 4"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="source_in 3" spacing="0"/>
+              <portSpacing port="source_in 4" spacing="0"/>
+              <portSpacing port="source_in 5" spacing="0"/>
+              <portSpacing port="sink_out 1" spacing="0"/>
+              <portSpacing port="sink_out 2" spacing="0"/>
+              <portSpacing port="sink_out 3" spacing="0"/>
+              <portSpacing port="sink_out 4" spacing="0"/>
+              <portSpacing port="sink_out 5" spacing="0"/>
+            </process>
+            <description align="center" color="transparent" colored="false" width="126">Verschiedene Zwischenspeicher f&amp;#252;r die Daten</description>
+          </operator>
+          <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="145" name="Konverter" width="90" x="715" y="34">
+            <process expanded="true">
+              <operator activated="true" class="text:wordlist_to_data" compatibility="7.5.000" expanded="true" height="82" name="WordList to Data (4)" width="90" x="447" y="391"/>
+              <operator activated="true" class="text:wordlist_to_data" compatibility="7.5.000" expanded="true" height="82" name="WordList to Data (2)" width="90" x="447" y="85"/>
+              <operator activated="true" class="text:wordlist_to_data" compatibility="7.5.000" expanded="true" height="82" name="WordList to Data (6)" width="90" x="447" y="187"/>
+              <operator activated="true" class="append" compatibility="8.0.001" expanded="true" height="103" name="Append (3)" width="90" x="648" y="187">
+                <parameter key="datamanagement" value="double_array"/>
+                <parameter key="data_management" value="auto"/>
+                <parameter key="merge_type" value="all"/>
+              </operator>
+              <operator activated="true" class="text:documents_to_data" compatibility="7.5.000" expanded="true" height="82" name="Documents to Data (4)" width="90" x="447" y="493">
+                <parameter key="text_attribute" value="text1"/>
+                <parameter key="add_meta_information" value="true"/>
+                <parameter key="datamanagement" value="double_sparse_array"/>
+                <parameter key="data_management" value="auto"/>
+              </operator>
+              <connect from_port="in 1" to_op="WordList to Data (2)" to_port="word list"/>
+              <connect from_port="in 2" to_op="WordList to Data (6)" to_port="word list"/>
+              <connect from_port="in 3" to_op="WordList to Data (4)" to_port="word list"/>
+              <connect from_port="in 4" to_op="Documents to Data (4)" to_port="documents 1"/>
+              <connect from_op="WordList to Data (4)" from_port="example set" to_port="out 2"/>
+              <connect from_op="WordList to Data (2)" from_port="example set" to_op="Append (3)" to_port="example set 1"/>
+              <connect from_op="WordList to Data (6)" from_port="example set" to_op="Append (3)" to_port="example set 2"/>
+              <connect from_op="Append (3)" from_port="merged set" to_port="out 1"/>
+              <connect from_op="Documents to Data (4)" from_port="example set" to_port="out 3"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="source_in 3" spacing="0"/>
+              <portSpacing port="source_in 4" spacing="0"/>
+              <portSpacing port="source_in 5" spacing="0"/>
+              <portSpacing port="sink_out 1" spacing="0"/>
+              <portSpacing port="sink_out 2" spacing="0"/>
+              <portSpacing port="sink_out 3" spacing="0"/>
+              <portSpacing port="sink_out 4" spacing="0"/>
+              <description align="center" color="yellow" colored="false" height="50" resized="false" width="177" x="427" y="28">Datenkonvertierungen f&amp;#252;r Exceleintr&amp;#228;ge f&amp;#252;r die Votes</description>
+              <description align="center" color="yellow" colored="false" height="50" resized="false" width="216" x="395" y="317">Datenkonvertierungen f&amp;#252;r Exceleintr&amp;#228;ge f&amp;#252;r die Kommentare</description>
+            </process>
+            <description align="center" color="transparent" colored="false" width="126">Konvertierungen f&amp;#252;r Excel</description>
+          </operator>
+          <connect from_port="in 1" to_op="SteamCrawler" to_port="in 1"/>
+          <connect from_op="SteamCrawler" from_port="out 1" to_op="Multiply" to_port="input"/>
+          <connect from_op="Multiply" from_port="output 1" to_op="Up/Down-Votes" to_port="in 1"/>
+          <connect from_op="Multiply" from_port="output 2" to_op="Bewertungen" to_port="in 1"/>
+          <connect from_op="Bewertungen" from_port="out 1" to_op="Speicher" to_port="in 3"/>
+          <connect from_op="Bewertungen" from_port="out 2" to_op="Speicher" to_port="in 4"/>
+          <connect from_op="Up/Down-Votes" from_port="out 1" to_op="Speicher" to_port="in 1"/>
+          <connect from_op="Up/Down-Votes" from_port="out 2" to_op="Speicher" to_port="in 2"/>
+          <connect from_op="Speicher" from_port="out 1" to_op="Konverter" to_port="in 1"/>
+          <connect from_op="Speicher" from_port="out 2" to_op="Konverter" to_port="in 2"/>
+          <connect from_op="Speicher" from_port="out 3" to_op="Konverter" to_port="in 3"/>
+          <connect from_op="Speicher" from_port="out 4" to_op="Konverter" to_port="in 4"/>
+          <connect from_op="Konverter" from_port="out 1" to_port="out 1"/>
+          <connect from_op="Konverter" from_port="out 2" to_port="out 2"/>
+          <connect from_op="Konverter" from_port="out 3" to_port="out 3"/>
+          <portSpacing port="source_in 1" spacing="0"/>
+          <portSpacing port="source_in 2" spacing="0"/>
+          <portSpacing port="sink_out 1" spacing="0"/>
+          <portSpacing port="sink_out 2" spacing="0"/>
+          <portSpacing port="sink_out 3" spacing="0"/>
+          <portSpacing port="sink_out 4" spacing="0"/>
+        </process>
+      </operator>
+      <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="124" name="Neu Komments" width="90" x="313" y="238">
+        <process expanded="true">
+          <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="SteamCrawler (2)" width="90" x="45" y="34">
+            <process expanded="true">
+              <operator activated="true" class="set_macro" compatibility="8.0.001" expanded="true" height="82" name="Set Macro (2)" width="90" x="246" y="85">
+                <parameter key="macro" value="offset"/>
+                <parameter key="value" value="2900"/>
+                <description align="center" color="transparent" colored="false" width="126">Hochz&amp;#228;hlendes Macro f&amp;#252;r den Query-Parameter</description>
+              </operator>
+              <operator activated="true" class="concurrency:loop" compatibility="8.0.001" expanded="true" height="103" name="Loop (2)" width="90" x="447" y="34">
+                <parameter key="number_of_iterations" value="101"/>
+                <parameter key="iteration_macro" value="iteration"/>
+                <parameter key="reuse_results" value="false"/>
+                <parameter key="enable_parallel_execution" value="false"/>
+                <process expanded="true">
+                  <operator activated="true" class="web:get_webpage" compatibility="7.3.000" expanded="true" height="68" name="Get Page (2)" width="90" x="581" y="34">
+                    <parameter key="url" value="http://store.steampowered.com/appreviews/8500?json=1"/>
+                    <parameter key="random_user_agent" value="false"/>
+                    <parameter key="connection_timeout" value="10000"/>
+                    <parameter key="read_timeout" value="10000"/>
+                    <parameter key="follow_redirects" value="true"/>
+                    <parameter key="accept_cookies" value="none"/>
+                    <parameter key="cookie_scope" value="global"/>
+                    <parameter key="request_method" value="GET"/>
+                    <list key="query_parameters">
+                      <parameter key="filter" value="recent"/>
+                      <parameter key="language" value="german"/>
+                      <parameter key="day_range" value="all"/>
+                      <parameter key="start_offset" value="%{offset}"/>
+                      <parameter key="review_type" value="all"/>
+                      <parameter key="purchase_type" value="all"/>
+                    </list>
+                    <list key="request_properties"/>
+                    <parameter key="override_encoding" value="false"/>
+                    <parameter key="encoding" value="SYSTEM"/>
+                    <description align="center" color="transparent" colored="false" width="126">Kommentare von der Steam-API abholen</description>
+                  </operator>
+                  <operator activated="true" class="generate_macro" compatibility="8.0.001" expanded="true" height="82" name="Generate Macro (2)" width="90" x="179" y="34">
+                    <list key="function_descriptions">
+                      <parameter key="offset" value="eval(%{iteration})*20"/>
+                    </list>
+                    <description align="center" color="transparent" colored="false" width="126">Hochz&amp;#228;hlendes Macro f&amp;#252;r den Query-Parameter</description>
+                  </operator>
+                  <connect from_port="input 2" to_op="Generate Macro (2)" to_port="through 1"/>
+                  <connect from_op="Get Page (2)" from_port="output" to_port="output 1"/>
+                  <portSpacing port="source_input 1" spacing="0"/>
+                  <portSpacing port="source_input 2" spacing="0"/>
+                  <portSpacing port="source_input 3" spacing="0"/>
+                  <portSpacing port="sink_output 1" spacing="0"/>
+                  <portSpacing port="sink_output 2" spacing="0"/>
+                </process>
+                <description align="center" color="transparent" colored="false" width="126">Holt bei jedem durchlauf die n&amp;#228;chsten 20 Kommentare von der Steam-API</description>
+              </operator>
+              <connect from_port="in 1" to_op="Loop (2)" to_port="input 1"/>
+              <connect from_port="in 2" to_op="Set Macro (2)" to_port="through 1"/>
+              <connect from_op="Set Macro (2)" from_port="through 1" to_op="Loop (2)" to_port="input 2"/>
+              <connect from_op="Loop (2)" from_port="output 1" to_port="out 1"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="source_in 3" spacing="0"/>
+              <portSpacing port="sink_out 1" spacing="0"/>
+              <portSpacing port="sink_out 2" spacing="0"/>
+            </process>
+            <description align="center" color="transparent" colored="false" width="126">Holt sich die ganzen Steam Kommentare</description>
+          </operator>
+          <operator activated="true" class="multiply" compatibility="8.0.001" expanded="true" height="103" name="Multiply (4)" width="90" x="179" y="34"/>
+          <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Up/Down-Votes (3)" width="90" x="313" y="34">
+            <process expanded="true">
+              <operator activated="true" class="multiply" compatibility="8.0.001" expanded="true" height="103" name="Multiply (5)" width="90" x="112" y="85"/>
+              <operator activated="true" class="text:process_documents" compatibility="7.5.000" expanded="true" height="103" name="Berechnung_Negativ (3)" width="90" x="380" y="187">
+                <parameter key="create_word_vector" value="true"/>
+                <parameter key="vector_creation" value="Term Frequency"/>
+                <parameter key="add_meta_information" value="false"/>
+                <parameter key="keep_text" value="false"/>
+                <parameter key="prune_method" value="none"/>
+                <parameter key="prune_below_percent" value="80.0"/>
+                <parameter key="prune_above_percent" value="95.0"/>
+                <parameter key="prune_below_rank" value="0.05"/>
+                <parameter key="prune_above_rank" value="1.0"/>
+                <parameter key="datamanagement" value="float_sparse_array"/>
+                <parameter key="data_management" value="auto"/>
+                <process expanded="true">
+                  <operator activated="true" class="text:tokenize" compatibility="7.5.000" expanded="true" height="68" name="Tokenize (2)" width="90" x="313" y="34">
+                    <parameter key="mode" value="specify characters"/>
+                    <parameter key="characters" value=","/>
+                    <parameter key="language" value="English"/>
+                    <parameter key="max_token_length" value="3"/>
+                    <description align="center" color="transparent" colored="false" width="126">Zerlegt die Texte in einzelne Abschnitte aus denen sich die Anzahl der UP/Down-Votes ergibt</description>
+                  </operator>
+                  <operator activated="true" class="text:filter_tokens_by_content" compatibility="7.5.000" expanded="true" height="68" name="Filter Tokens (5)" width="90" x="581" y="34">
+                    <parameter key="condition" value="contains"/>
+                    <parameter key="string" value="&quot;voted_up&quot;:false"/>
+                    <parameter key="case_sensitive" value="false"/>
+                    <parameter key="invert condition" value="false"/>
+                    <description align="center" color="transparent" colored="false" width="126">Filterd alle DOWN-Votes</description>
+                  </operator>
+                  <connect from_port="document" to_op="Tokenize (2)" to_port="document"/>
+                  <connect from_op="Tokenize (2)" from_port="document" to_op="Filter Tokens (5)" to_port="document"/>
+                  <connect from_op="Filter Tokens (5)" from_port="document" to_port="document 1"/>
+                  <portSpacing port="source_document" spacing="0"/>
+                  <portSpacing port="sink_document 1" spacing="0"/>
+                  <portSpacing port="sink_document 2" spacing="0"/>
+                </process>
+                <description align="center" color="transparent" colored="false" width="126">Z&amp;#228;hlt die DOWN-Votes</description>
+              </operator>
+              <operator activated="true" class="text:process_documents" compatibility="7.5.000" expanded="true" height="103" name="Berechnung_Positiv (3)" width="90" x="380" y="34">
+                <parameter key="create_word_vector" value="true"/>
+                <parameter key="vector_creation" value="Term Frequency"/>
+                <parameter key="add_meta_information" value="false"/>
+                <parameter key="keep_text" value="false"/>
+                <parameter key="prune_method" value="none"/>
+                <parameter key="prune_below_percent" value="80.0"/>
+                <parameter key="prune_above_percent" value="95.0"/>
+                <parameter key="prune_below_rank" value="0.05"/>
+                <parameter key="prune_above_rank" value="1.0"/>
+                <parameter key="datamanagement" value="float_sparse_array"/>
+                <parameter key="data_management" value="auto"/>
+                <process expanded="true">
+                  <operator activated="true" class="text:tokenize" compatibility="7.5.000" expanded="true" height="68" name="Tokenize (8)" width="90" x="246" y="34">
+                    <parameter key="mode" value="specify characters"/>
+                    <parameter key="characters" value=","/>
+                    <parameter key="language" value="English"/>
+                    <parameter key="max_token_length" value="3"/>
+                    <description align="center" color="transparent" colored="false" width="126">Zerlegt die Texte in einzelne Abschnitte aus denen sich die Anzahl der UP/Down-Votes ergibt</description>
+                  </operator>
+                  <operator activated="true" class="text:filter_tokens_by_content" compatibility="7.5.000" expanded="true" height="68" name="Filter Tokens (7)" width="90" x="581" y="34">
+                    <parameter key="condition" value="contains"/>
+                    <parameter key="string" value="&quot;voted_up&quot;:true"/>
+                    <parameter key="case_sensitive" value="false"/>
+                    <parameter key="invert condition" value="false"/>
+                    <description align="center" color="transparent" colored="false" width="126">Filterd alle UP-Votes</description>
+                  </operator>
+                  <connect from_port="document" to_op="Tokenize (8)" to_port="document"/>
+                  <connect from_op="Tokenize (8)" from_port="document" to_op="Filter Tokens (7)" to_port="document"/>
+                  <connect from_op="Filter Tokens (7)" from_port="document" to_port="document 1"/>
+                  <portSpacing port="source_document" spacing="0"/>
+                  <portSpacing port="sink_document 1" spacing="0"/>
+                  <portSpacing port="sink_document 2" spacing="0"/>
+                </process>
+                <description align="center" color="transparent" colored="false" width="126">Z&amp;#228;hlt die UP-Votes</description>
+              </operator>
+              <connect from_port="in 1" to_op="Multiply (5)" to_port="input"/>
+              <connect from_op="Multiply (5)" from_port="output 1" to_op="Berechnung_Positiv (3)" to_port="documents 1"/>
+              <connect from_op="Multiply (5)" from_port="output 2" to_op="Berechnung_Negativ (3)" to_port="documents 1"/>
+              <connect from_op="Berechnung_Negativ (3)" from_port="word list" to_port="out 2"/>
+              <connect from_op="Berechnung_Positiv (3)" from_port="word list" to_port="out 1"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="sink_out 1" spacing="0"/>
+              <portSpacing port="sink_out 2" spacing="0"/>
+              <portSpacing port="sink_out 3" spacing="0"/>
+            </process>
+            <description align="center" color="transparent" colored="false" width="126">Z&amp;#228;hlt die UP/DOWN-Votes</description>
+          </operator>
+          <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Bewertungen (2)" width="90" x="313" y="238">
+            <process expanded="true">
+              <operator activated="true" class="text:process_documents" compatibility="7.5.000" expanded="true" height="103" name="Kommentare Seperieren (2)" width="90" x="45" y="34">
+                <parameter key="create_word_vector" value="false"/>
+                <parameter key="vector_creation" value="Term Occurrences"/>
+                <parameter key="add_meta_information" value="false"/>
+                <parameter key="keep_text" value="true"/>
+                <parameter key="prune_method" value="none"/>
+                <parameter key="prune_below_percent" value="3.0"/>
+                <parameter key="prune_above_percent" value="30.0"/>
+                <parameter key="prune_below_rank" value="0.05"/>
+                <parameter key="prune_above_rank" value="0.95"/>
+                <parameter key="datamanagement" value="double_sparse_array"/>
+                <parameter key="data_management" value="auto"/>
+                <process expanded="true">
+                  <operator activated="true" class="text:tokenize" compatibility="7.5.000" expanded="true" height="68" name="Tokenize (5)" width="90" x="514" y="34">
+                    <parameter key="mode" value="regular expression"/>
+                    <parameter key="characters" value=".:"/>
+                    <parameter key="expression" value="recommendationid"/>
+                    <parameter key="language" value="English"/>
+                    <parameter key="max_token_length" value="3"/>
+                    <description align="center" color="transparent" colored="false" width="126">Zerlegt das Dokument in die Einzelnen Kommentare</description>
+                  </operator>
+                  <connect from_port="document" to_op="Tokenize (5)" to_port="document"/>
+                  <connect from_op="Tokenize (5)" from_port="document" to_port="document 1"/>
+                  <portSpacing port="source_document" spacing="0"/>
+                  <portSpacing port="sink_document 1" spacing="0"/>
+                  <portSpacing port="sink_document 2" spacing="0"/>
+                </process>
+                <description align="center" color="transparent" colored="false" width="126">Zerlegt das Dokument in die Einzelnen Kommentare</description>
+              </operator>
+              <operator activated="true" class="multiply" compatibility="8.0.001" expanded="true" height="103" name="Multiply (6)" width="90" x="179" y="34"/>
+              <operator activated="true" class="text:wordlist_to_data" compatibility="7.5.000" expanded="true" height="82" name="WordList to Data (9)" width="90" x="313" y="85">
+                <description align="center" color="transparent" colored="false" width="126">Datenkonvertierung f&amp;#252;r die Sentimentanalyze</description>
+              </operator>
+              <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="82" name="Sentimentanalyse (2)" width="90" x="447" y="85">
+                <process expanded="true">
+                  <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Vorbereitung (2)" width="90" x="112" y="34">
+                    <process expanded="true">
+                      <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Wortliste (2)" width="90" x="45" y="238">
+                        <process expanded="true">
+                          <operator activated="true" class="read_excel" compatibility="8.0.001" expanded="true" height="68" name="Positive Wortliste (2)" width="90" x="45" y="85">
+                            <parameter key="excel_file" value="C:\Users\lp_ontour\.RapidMiner\repositories\Local Repository\data\Wortlisten\Wortliste DeutschTest.xlsx"/>
+                            <parameter key="sheet_number" value="1"/>
+                            <parameter key="imported_cell_range" value="A1"/>
+                            <parameter key="encoding" value="SYSTEM"/>
+                            <parameter key="first_row_as_names" value="true"/>
+                            <list key="annotations"/>
+                            <parameter key="date_format" value=""/>
+                            <parameter key="time_zone" value="SYSTEM"/>
+                            <parameter key="locale" value="English (United States)"/>
+                            <list key="data_set_meta_data_information"/>
+                            <parameter key="read_not_matching_values_as_missings" value="true"/>
+                            <parameter key="datamanagement" value="double_array"/>
+                            <parameter key="data_management" value="auto"/>
+                            <description align="center" color="transparent" colored="false" width="126">Holt die gesamte Wortliste</description>
+                          </operator>
+                          <operator activated="true" class="multiply" compatibility="8.0.001" expanded="true" height="103" name="Multiply (7)" width="90" x="179" y="85"/>
+                          <operator activated="true" class="text:data_to_documents" compatibility="7.5.000" expanded="true" height="68" name="Data to Documents (2)" width="90" x="313" y="34">
+                            <parameter key="select_attributes_and_weights" value="true"/>
+                            <list key="specify_weights">
+                              <parameter key="term" value="1.0"/>
+                            </list>
+                          </operator>
+                          <operator activated="true" class="text:process_documents" compatibility="7.5.000" expanded="true" height="103" name="Process Documents (2)" width="90" x="447" y="34">
+                            <parameter key="create_word_vector" value="true"/>
+                            <parameter key="vector_creation" value="TF-IDF"/>
+                            <parameter key="add_meta_information" value="true"/>
+                            <parameter key="keep_text" value="true"/>
+                            <parameter key="prune_method" value="none"/>
+                            <parameter key="prune_below_percent" value="3.0"/>
+                            <parameter key="prune_above_percent" value="30.0"/>
+                            <parameter key="prune_below_rank" value="0.05"/>
+                            <parameter key="prune_above_rank" value="0.95"/>
+                            <parameter key="datamanagement" value="double_sparse_array"/>
+                            <parameter key="data_management" value="auto"/>
+                            <process expanded="true">
+                              <operator activated="true" class="text:transform_cases" compatibility="7.5.000" expanded="true" height="68" name="Transform Cases (2)" width="90" x="514" y="34">
+                                <parameter key="transform_to" value="lower case"/>
+                                <description align="center" color="transparent" colored="false" width="126">Wandelt alles in kleine Buchstaben</description>
+                              </operator>
+                              <connect from_port="document" to_op="Transform Cases (2)" to_port="document"/>
+                              <connect from_op="Transform Cases (2)" from_port="document" to_port="document 1"/>
+                              <portSpacing port="source_document" spacing="0"/>
+                              <portSpacing port="sink_document 1" spacing="0"/>
+                              <portSpacing port="sink_document 2" spacing="0"/>
+                              <description align="center" color="yellow" colored="false" height="105" resized="false" width="180" x="570" y="891">Type your comment</description>
+                            </process>
+                          </operator>
+                          <operator activated="true" class="generate_id" compatibility="8.0.001" expanded="true" height="82" name="Generate ID (2)" width="90" x="313" y="238">
+                            <parameter key="create_nominal_ids" value="false"/>
+                            <parameter key="offset" value="0"/>
+                            <description align="center" color="transparent" colored="false" width="126">Formatierung f&amp;#252;r die sp&amp;#228;tere Nutzung der Gewichte</description>
+                          </operator>
+                          <connect from_op="Positive Wortliste (2)" from_port="output" to_op="Multiply (7)" to_port="input"/>
+                          <connect from_op="Multiply (7)" from_port="output 1" to_op="Data to Documents (2)" to_port="example set"/>
+                          <connect from_op="Multiply (7)" from_port="output 2" to_op="Generate ID (2)" to_port="example set input"/>
+                          <connect from_op="Data to Documents (2)" from_port="documents" to_op="Process Documents (2)" to_port="documents 1"/>
+                          <connect from_op="Process Documents (2)" from_port="word list" to_port="out 1"/>
+                          <connect from_op="Generate ID (2)" from_port="example set output" to_port="out 2"/>
+                          <portSpacing port="source_in 1" spacing="0"/>
+                          <portSpacing port="sink_out 1" spacing="0"/>
+                          <portSpacing port="sink_out 2" spacing="0"/>
+                          <portSpacing port="sink_out 3" spacing="0"/>
+                          <description align="center" color="yellow" colored="false" height="50" resized="false" width="216" x="313" y="149">Formatierung f&amp;#252;r die Suche der W&amp;#246;rter in den Kommentaren</description>
+                        </process>
+                        <description align="center" color="transparent" colored="false" width="126">Formatiert die Wortliste</description>
+                      </operator>
+                      <operator activated="true" class="generate_attributes" compatibility="8.0.001" expanded="true" height="82" name="Generate Attributes (2)" width="90" x="581" y="340">
+                        <list key="function_descriptions">
+                          <parameter key="term1" value="term"/>
+                          <parameter key="gewicht1" value="gewicht"/>
+                        </list>
+                        <parameter key="keep_all" value="true"/>
+                        <description align="center" color="transparent" colored="false" width="126">Weitere Formatierung f&amp;#252;r die sp&amp;#228;tere Nutzung als Vergleichsliste</description>
+                      </operator>
+                      <operator activated="true" class="generate_attributes" compatibility="8.0.001" expanded="true" height="82" name="Generate Attributes (3)" width="90" x="45" y="34">
+                        <list key="function_descriptions">
+                          <parameter key="text" value="word"/>
+                        </list>
+                        <parameter key="keep_all" value="true"/>
+                      </operator>
+                      <operator activated="true" class="nominal_to_text" compatibility="8.0.001" expanded="true" height="82" name="Nominal to Text (2)" width="90" x="179" y="34">
+                        <parameter key="attribute_filter_type" value="single"/>
+                        <parameter key="attribute" value="text"/>
+                        <parameter key="attributes" value=""/>
+                        <parameter key="use_except_expression" value="false"/>
+                        <parameter key="value_type" value="nominal"/>
+                        <parameter key="use_value_type_exception" value="false"/>
+                        <parameter key="except_value_type" value="file_path"/>
+                        <parameter key="block_type" value="single_value"/>
+                        <parameter key="use_block_type_exception" value="false"/>
+                        <parameter key="except_block_type" value="single_value"/>
+                        <parameter key="invert_selection" value="false"/>
+                        <parameter key="include_special_attributes" value="false"/>
+                      </operator>
+                      <operator activated="true" class="select_attributes" compatibility="8.0.001" expanded="true" height="82" name="Select Attributes (2)" width="90" x="313" y="34">
+                        <parameter key="attribute_filter_type" value="single"/>
+                        <parameter key="attribute" value="word"/>
+                        <parameter key="attributes" value=""/>
+                        <parameter key="use_except_expression" value="false"/>
+                        <parameter key="value_type" value="attribute_value"/>
+                        <parameter key="use_value_type_exception" value="false"/>
+                        <parameter key="except_value_type" value="time"/>
+                        <parameter key="block_type" value="attribute_block"/>
+                        <parameter key="use_block_type_exception" value="false"/>
+                        <parameter key="except_block_type" value="value_matrix_row_start"/>
+                        <parameter key="invert_selection" value="true"/>
+                        <parameter key="include_special_attributes" value="false"/>
+                      </operator>
+                      <operator activated="true" class="set_role" compatibility="8.0.001" expanded="true" height="82" name="Set Role (3)" width="90" x="447" y="34">
+                        <parameter key="attribute_name" value="text"/>
+                        <parameter key="target_role" value="regular"/>
+                        <list key="set_additional_roles"/>
+                      </operator>
+                      <operator activated="true" class="text:process_document_from_data" compatibility="7.5.000" expanded="true" height="82" name="Process Documents from Data (2)" width="90" x="581" y="136">
+                        <parameter key="create_word_vector" value="true"/>
+                        <parameter key="vector_creation" value="Term Occurrences"/>
+                        <parameter key="add_meta_information" value="false"/>
+                        <parameter key="keep_text" value="true"/>
+                        <parameter key="prune_method" value="none"/>
+                        <parameter key="prune_below_percent" value="3.0"/>
+                        <parameter key="prune_above_percent" value="30.0"/>
+                        <parameter key="prune_below_rank" value="0.05"/>
+                        <parameter key="prune_above_rank" value="0.95"/>
+                        <parameter key="datamanagement" value="double_sparse_array"/>
+                        <parameter key="data_management" value="auto"/>
+                        <parameter key="select_attributes_and_weights" value="false"/>
+                        <list key="specify_weights"/>
+                        <process expanded="true">
+                          <operator activated="true" class="text:tokenize" compatibility="7.5.000" expanded="true" height="68" name="Tokenize (7)" width="90" x="313" y="34">
+                            <parameter key="mode" value="non letters"/>
+                            <parameter key="characters" value="\s"/>
+                            <parameter key="language" value="English"/>
+                            <parameter key="max_token_length" value="3"/>
+                          </operator>
+                          <operator activated="true" class="text:filter_by_length" compatibility="7.5.000" expanded="true" height="68" name="Filter Tokens (3)" width="90" x="447" y="34">
+                            <parameter key="min_chars" value="1"/>
+                            <parameter key="max_chars" value="9999"/>
+                          </operator>
+                          <operator activated="true" class="text:transform_cases" compatibility="7.5.000" expanded="true" height="68" name="Transform Cases (3)" width="90" x="581" y="34">
+                            <parameter key="transform_to" value="lower case"/>
+                          </operator>
+                          <connect from_port="document" to_op="Tokenize (7)" to_port="document"/>
+                          <connect from_op="Tokenize (7)" from_port="document" to_op="Filter Tokens (3)" to_port="document"/>
+                          <connect from_op="Filter Tokens (3)" from_port="document" to_op="Transform Cases (3)" to_port="document"/>
+                          <connect from_op="Transform Cases (3)" from_port="document" to_port="document 1"/>
+                          <portSpacing port="source_document" spacing="0"/>
+                          <portSpacing port="sink_document 1" spacing="0"/>
+                          <portSpacing port="sink_document 2" spacing="0"/>
+                          <description align="center" color="yellow" colored="false" height="50" resized="false" width="180" x="394" y="121">Einteilung in einzelne W&amp;#246;rter</description>
+                        </process>
+                        <description align="center" color="transparent" colored="false" width="126">Suche nach den W&amp;#246;rter aus der Wortliste in den Kommentaren</description>
+                      </operator>
+                      <connect from_port="in 1" to_op="Generate Attributes (3)" to_port="example set input"/>
+                      <connect from_op="Wortliste (2)" from_port="out 1" to_op="Process Documents from Data (2)" to_port="word list"/>
+                      <connect from_op="Wortliste (2)" from_port="out 2" to_op="Generate Attributes (2)" to_port="example set input"/>
+                      <connect from_op="Generate Attributes (2)" from_port="example set output" to_port="out 2"/>
+                      <connect from_op="Generate Attributes (3)" from_port="example set output" to_op="Nominal to Text (2)" to_port="example set input"/>
+                      <connect from_op="Nominal to Text (2)" from_port="example set output" to_op="Select Attributes (2)" to_port="example set input"/>
+                      <connect from_op="Select Attributes (2)" from_port="example set output" to_op="Set Role (3)" to_port="example set input"/>
+                      <connect from_op="Set Role (3)" from_port="example set output" to_op="Process Documents from Data (2)" to_port="example set"/>
+                      <connect from_op="Process Documents from Data (2)" from_port="example set" to_port="out 1"/>
+                      <portSpacing port="source_in 1" spacing="0"/>
+                      <portSpacing port="source_in 2" spacing="0"/>
+                      <portSpacing port="sink_out 1" spacing="0"/>
+                      <portSpacing port="sink_out 2" spacing="0"/>
+                      <portSpacing port="sink_out 3" spacing="0"/>
+                      <description align="center" color="yellow" colored="false" height="50" resized="false" width="133" x="205" y="126">Formatierungen f&amp;#252;r die Kommentare</description>
+                    </process>
+                    <description align="center" color="transparent" colored="false" width="126">Vorbereitung der Daten(Tabellen) f&amp;#252;r die Analyse</description>
+                  </operator>
+                  <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Verarbeitung (2)" width="90" x="380" y="34">
+                    <process expanded="true">
+                      <operator activated="true" class="concurrency:loop_attributes" compatibility="8.0.001" expanded="true" height="103" name="Loop Attributes (3)" width="90" x="45" y="34">
+                        <parameter key="attribute_filter_type" value="single"/>
+                        <parameter key="attribute" value="text"/>
+                        <parameter key="attributes" value=""/>
+                        <parameter key="regular_expression" value="loop_valueterm"/>
+                        <parameter key="use_except_expression" value="false"/>
+                        <parameter key="value_type" value="attribute_value"/>
+                        <parameter key="use_value_type_exception" value="false"/>
+                        <parameter key="except_value_type" value="time"/>
+                        <parameter key="block_type" value="attribute_block"/>
+                        <parameter key="use_block_type_exception" value="false"/>
+                        <parameter key="except_block_type" value="value_matrix_row_start"/>
+                        <parameter key="invert_selection" value="true"/>
+                        <parameter key="include_special_attributes" value="false"/>
+                        <parameter key="attribute_name_macro" value="loop_attribute"/>
+                        <parameter key="reuse_results" value="false"/>
+                        <parameter key="enable_parallel_execution" value="false"/>
+                        <process expanded="true">
+                          <operator activated="true" class="generate_attributes" compatibility="8.0.001" expanded="true" height="82" name="Generate Attributes (8)" width="90" x="179" y="34">
+                            <list key="function_descriptions">
+                              <parameter key="Text3" value="%{loop_attribute}"/>
+                            </list>
+                            <parameter key="keep_all" value="true"/>
+                          </operator>
+                          <operator activated="true" class="concurrency:loop_values" compatibility="8.0.001" expanded="true" height="103" name="Loop Values (2)" width="90" x="581" y="34">
+                            <parameter key="attribute" value="Text3"/>
+                            <parameter key="iteration_macro" value="loop_value"/>
+                            <parameter key="reuse_results" value="false"/>
+                            <parameter key="enable_parallel_execution" value="false"/>
+                            <process expanded="true">
+                              <operator activated="true" class="numerical_to_polynominal" compatibility="8.0.001" expanded="true" height="82" name="Numerical to Polynominal (2)" width="90" x="112" y="85">
+                                <parameter key="attribute_filter_type" value="single"/>
+                                <parameter key="attribute" value="id"/>
+                                <parameter key="attributes" value=""/>
+                                <parameter key="use_except_expression" value="false"/>
+                                <parameter key="value_type" value="numeric"/>
+                                <parameter key="use_value_type_exception" value="false"/>
+                                <parameter key="except_value_type" value="real"/>
+                                <parameter key="block_type" value="value_series"/>
+                                <parameter key="use_block_type_exception" value="false"/>
+                                <parameter key="except_block_type" value="value_series_end"/>
+                                <parameter key="invert_selection" value="false"/>
+                                <parameter key="include_special_attributes" value="true"/>
+                              </operator>
+                              <operator activated="true" class="concurrency:loop_values" compatibility="8.0.001" expanded="true" height="103" name="Loop Values (3)" width="90" x="514" y="34">
+                                <parameter key="attribute" value="id"/>
+                                <parameter key="iteration_macro" value="loop_valueterm"/>
+                                <parameter key="reuse_results" value="false"/>
+                                <parameter key="enable_parallel_execution" value="false"/>
+                                <process expanded="true">
+                                  <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="103" name="Macros (2)" width="90" x="179" y="34">
+                                    <process expanded="true">
+                                      <operator activated="true" class="extract_macro" compatibility="8.0.001" expanded="true" height="68" name="Extract Macro (3)" width="90" x="246" y="136">
+                                        <parameter key="macro" value="sGewicht"/>
+                                        <parameter key="macro_type" value="data_value"/>
+                                        <parameter key="statistics" value="average"/>
+                                        <parameter key="attribute_name" value="gewicht1"/>
+                                        <parameter key="example_index" value="%{loop_valueterm}"/>
+                                        <list key="additional_macros"/>
+                                      </operator>
+                                      <operator activated="true" class="extract_macro" compatibility="8.0.001" expanded="true" height="68" name="Extract Macro (4)" width="90" x="380" y="136">
+                                        <parameter key="macro" value="sTerm"/>
+                                        <parameter key="macro_type" value="data_value"/>
+                                        <parameter key="statistics" value="average"/>
+                                        <parameter key="attribute_name" value="term1"/>
+                                        <parameter key="example_index" value="%{loop_valueterm}"/>
+                                        <list key="additional_macros"/>
+                                      </operator>
+                                      <operator activated="true" class="extract_macro" compatibility="8.0.001" expanded="true" height="68" name="Extract Macro (6)" width="90" x="380" y="34">
+                                        <parameter key="macro" value="Text3Name"/>
+                                        <parameter key="macro_type" value="data_value"/>
+                                        <parameter key="statistics" value="average"/>
+                                        <parameter key="attribute_name" value="Text3"/>
+                                        <parameter key="example_index" value="%{loop_valueterm}"/>
+                                        <list key="additional_macros"/>
+                                      </operator>
+                                      <operator activated="true" class="generate_macro" compatibility="8.0.001" expanded="true" height="103" name="Generate Macro (4)" width="90" x="514" y="85">
+                                        <list key="function_descriptions">
+                                          <parameter key="replaceValue" value="eval(%{sGewicht})"/>
+                                        </list>
+                                      </operator>
+                                      <connect from_port="in 1" to_op="Extract Macro (6)" to_port="example set"/>
+                                      <connect from_port="in 2" to_op="Extract Macro (3)" to_port="example set"/>
+                                      <connect from_op="Extract Macro (3)" from_port="example set" to_op="Extract Macro (4)" to_port="example set"/>
+                                      <connect from_op="Extract Macro (4)" from_port="example set" to_op="Generate Macro (4)" to_port="through 2"/>
+                                      <connect from_op="Extract Macro (6)" from_port="example set" to_op="Generate Macro (4)" to_port="through 1"/>
+                                      <connect from_op="Generate Macro (4)" from_port="through 1" to_port="out 1"/>
+                                      <connect from_op="Generate Macro (4)" from_port="through 2" to_port="out 2"/>
+                                      <portSpacing port="source_in 1" spacing="0"/>
+                                      <portSpacing port="source_in 2" spacing="0"/>
+                                      <portSpacing port="source_in 3" spacing="0"/>
+                                      <portSpacing port="sink_out 1" spacing="0"/>
+                                      <portSpacing port="sink_out 2" spacing="0"/>
+                                      <portSpacing port="sink_out 3" spacing="0"/>
+                                      <description align="center" color="yellow" colored="false" height="50" resized="false" width="176" x="349" y="221">Macros f&amp;#252;r Vergleiche und Ersetzungen</description>
+                                    </process>
+                                    <description align="center" color="transparent" colored="false" width="126">Macros f&amp;#252;r die Verarbeitung</description>
+                                  </operator>
+                                  <operator activated="true" class="branch" compatibility="8.0.001" expanded="true" height="103" name="Branch (3)" width="90" x="380" y="34">
+                                    <parameter key="condition_type" value="expression"/>
+                                    <parameter key="expression" value="%{sTerm}==%{loop_attribute}"/>
+                                    <parameter key="io_object" value="ANOVAMatrix"/>
+                                    <parameter key="return_inner_output" value="true"/>
+                                    <process expanded="true">
+                                      <operator activated="true" class="generate_attributes" compatibility="8.0.001" expanded="true" height="82" name="Generate Attributes (9)" width="90" x="112" y="34">
+                                        <list key="function_descriptions">
+                                          <parameter key="%{sTerm}gewichtet" value="eval(%{loop_value})*eval(%{sGewicht})"/>
+                                        </list>
+                                        <parameter key="keep_all" value="true"/>
+                                      </operator>
+                                      <connect from_port="input 1" to_op="Generate Attributes (9)" to_port="example set input"/>
+                                      <connect from_op="Generate Attributes (9)" from_port="example set output" to_port="input 1"/>
+                                      <portSpacing port="source_condition" spacing="0"/>
+                                      <portSpacing port="source_input 1" spacing="0"/>
+                                      <portSpacing port="source_input 2" spacing="0"/>
+                                      <portSpacing port="sink_input 1" spacing="0"/>
+                                      <portSpacing port="sink_input 2" spacing="0"/>
+                                    </process>
+                                    <process expanded="true">
+                                      <connect from_port="input 1" to_port="input 1"/>
+                                      <portSpacing port="source_condition" spacing="0"/>
+                                      <portSpacing port="source_input 1" spacing="0"/>
+                                      <portSpacing port="source_input 2" spacing="0"/>
+                                      <portSpacing port="sink_input 1" spacing="0"/>
+                                      <portSpacing port="sink_input 2" spacing="0"/>
+                                    </process>
+                                    <description align="center" color="transparent" colored="false" width="126">Einsetzen der (Gewichte * Termh&amp;#228;ufigkeit)</description>
+                                  </operator>
+                                  <operator activated="true" class="select_attributes" compatibility="8.0.001" expanded="true" height="82" name="Select Attributes (3)" width="90" x="581" y="34">
+                                    <parameter key="attribute_filter_type" value="single"/>
+                                    <parameter key="attribute" value="Text3"/>
+                                    <parameter key="attributes" value="|Text3|sTerm"/>
+                                    <parameter key="use_except_expression" value="false"/>
+                                    <parameter key="value_type" value="attribute_value"/>
+                                    <parameter key="use_value_type_exception" value="false"/>
+                                    <parameter key="except_value_type" value="time"/>
+                                    <parameter key="block_type" value="attribute_block"/>
+                                    <parameter key="use_block_type_exception" value="false"/>
+                                    <parameter key="except_block_type" value="value_matrix_row_start"/>
+                                    <parameter key="invert_selection" value="true"/>
+                                    <parameter key="include_special_attributes" value="false"/>
+                                  </operator>
+                                  <operator activated="true" class="select_attributes" compatibility="8.0.001" expanded="true" height="82" name="Select Attributes (4)" width="90" x="715" y="34">
+                                    <parameter key="attribute_filter_type" value="single"/>
+                                    <parameter key="attribute" value="%{sTerm}"/>
+                                    <parameter key="attributes" value="|Text3|sTerm"/>
+                                    <parameter key="regular_expression" value="sTerm"/>
+                                    <parameter key="use_except_expression" value="false"/>
+                                    <parameter key="value_type" value="attribute_value"/>
+                                    <parameter key="use_value_type_exception" value="false"/>
+                                    <parameter key="except_value_type" value="time"/>
+                                    <parameter key="block_type" value="attribute_block"/>
+                                    <parameter key="use_block_type_exception" value="false"/>
+                                    <parameter key="except_block_type" value="value_matrix_row_start"/>
+                                    <parameter key="invert_selection" value="true"/>
+                                    <parameter key="include_special_attributes" value="true"/>
+                                  </operator>
+                                  <connect from_port="input 1" to_op="Macros (2)" to_port="in 2"/>
+                                  <connect from_port="input 2" to_op="Macros (2)" to_port="in 1"/>
+                                  <connect from_op="Macros (2)" from_port="out 1" to_op="Branch (3)" to_port="input 1"/>
+                                  <connect from_op="Macros (2)" from_port="out 2" to_op="Branch (3)" to_port="condition"/>
+                                  <connect from_op="Branch (3)" from_port="input 1" to_op="Select Attributes (3)" to_port="example set input"/>
+                                  <connect from_op="Select Attributes (3)" from_port="example set output" to_op="Select Attributes (4)" to_port="example set input"/>
+                                  <connect from_op="Select Attributes (4)" from_port="example set output" to_port="output 1"/>
+                                  <portSpacing port="source_input 1" spacing="0"/>
+                                  <portSpacing port="source_input 2" spacing="0"/>
+                                  <portSpacing port="source_input 3" spacing="0"/>
+                                  <portSpacing port="sink_output 1" spacing="0"/>
+                                  <portSpacing port="sink_output 2" spacing="0"/>
+                                  <description align="center" color="yellow" colored="false" height="50" resized="false" width="146" x="625" y="129">L&amp;#246;schen &amp;#252;berfl&amp;#252;ssiger Attribute</description>
+                                </process>
+                                <description align="center" color="transparent" colored="false" width="126">Geht die Values der Wortliste durch</description>
+                              </operator>
+                              <connect from_port="input 1" to_op="Loop Values (3)" to_port="input 2"/>
+                              <connect from_port="input 2" to_op="Numerical to Polynominal (2)" to_port="example set input"/>
+                              <connect from_op="Numerical to Polynominal (2)" from_port="example set output" to_op="Loop Values (3)" to_port="input 1"/>
+                              <connect from_op="Loop Values (3)" from_port="output 1" to_port="output 1"/>
+                              <portSpacing port="source_input 1" spacing="0"/>
+                              <portSpacing port="source_input 2" spacing="0"/>
+                              <portSpacing port="source_input 3" spacing="0"/>
+                              <portSpacing port="sink_output 1" spacing="0"/>
+                              <portSpacing port="sink_output 2" spacing="0"/>
+                            </process>
+                            <description align="center" color="transparent" colored="false" width="126">Durchlaufen der Values der Kommentare</description>
+                          </operator>
+                          <connect from_port="input 1" to_op="Generate Attributes (8)" to_port="example set input"/>
+                          <connect from_port="input 2" to_op="Loop Values (2)" to_port="input 2"/>
+                          <connect from_op="Generate Attributes (8)" from_port="example set output" to_op="Loop Values (2)" to_port="input 1"/>
+                          <connect from_op="Loop Values (2)" from_port="output 1" to_port="output 1"/>
+                          <portSpacing port="source_input 1" spacing="0"/>
+                          <portSpacing port="source_input 2" spacing="0"/>
+                          <portSpacing port="source_input 3" spacing="0"/>
+                          <portSpacing port="sink_output 1" spacing="0"/>
+                          <portSpacing port="sink_output 2" spacing="0"/>
+                        </process>
+                        <description align="center" color="transparent" colored="false" width="126">Durchlaufen und Vergleichen der Kommentare und Wortliste(Attribute der Kommentare mit Termh&amp;#228;ufigkeit)</description>
+                      </operator>
+                      <operator activated="true" class="flatten_collection" compatibility="8.0.001" expanded="true" height="68" name="Flatten Collection (3)" width="90" x="179" y="34"/>
+                      <operator activated="true" class="loop_collection" compatibility="8.0.001" expanded="true" height="68" name="Loop Collection (2)" width="90" x="313" y="34">
+                        <parameter key="set_iteration_macro" value="true"/>
+                        <parameter key="macro_name" value="iteration"/>
+                        <parameter key="macro_start_value" value="1"/>
+                        <parameter key="unfold" value="false"/>
+                        <process expanded="true">
+                          <operator activated="true" class="generate_id" compatibility="8.0.001" expanded="true" height="82" name="Generate ID (4)" width="90" x="112" y="34">
+                            <parameter key="create_nominal_ids" value="false"/>
+                            <parameter key="offset" value="0"/>
+                          </operator>
+                          <operator activated="true" class="multiply" compatibility="8.0.001" expanded="true" height="82" name="Multiply (8)" width="90" x="246" y="34"/>
+                          <operator activated="true" class="branch" compatibility="8.0.001" expanded="true" height="82" name="Branch (4)" width="90" x="380" y="34">
+                            <parameter key="condition_type" value="expression"/>
+                            <parameter key="expression" value="eval(%{iteration})==1"/>
+                            <parameter key="io_object" value="ANOVAMatrix"/>
+                            <parameter key="return_inner_output" value="true"/>
+                            <process expanded="true">
+                              <operator activated="true" class="remember" compatibility="8.0.001" expanded="true" height="68" name="Remember (3)" width="90" x="179" y="34">
+                                <parameter key="name" value="exampleset"/>
+                                <parameter key="io_object" value="ExampleSet"/>
+                                <parameter key="store_which" value="1"/>
+                                <parameter key="remove_from_process" value="true"/>
+                                <description align="center" color="transparent" colored="false" width="126">Speichert das Exapleset als Globale Variable</description>
+                              </operator>
+                              <connect from_port="condition" to_op="Remember (3)" to_port="store"/>
+                              <portSpacing port="source_condition" spacing="0"/>
+                              <portSpacing port="source_input 1" spacing="0"/>
+                              <portSpacing port="sink_input 1" spacing="0"/>
+                            </process>
+                            <process expanded="true">
+                              <operator activated="true" class="recall" compatibility="8.0.001" expanded="true" height="68" name="Recall (3)" width="90" x="179" y="34">
+                                <parameter key="name" value="exampleset"/>
+                                <parameter key="io_object" value="ExampleSet"/>
+                                <parameter key="remove_from_store" value="true"/>
+                                <description align="center" color="transparent" colored="false" width="126">Ruft die Globale Variable wieder ab</description>
+                              </operator>
+                              <operator activated="true" class="join" compatibility="8.0.001" expanded="true" height="82" name="Join (2)" width="90" x="313" y="187">
+                                <parameter key="remove_double_attributes" value="true"/>
+                                <parameter key="join_type" value="inner"/>
+                                <parameter key="use_id_attribute_as_key" value="true"/>
+                                <list key="key_attributes"/>
+                                <parameter key="keep_both_join_attributes" value="false"/>
+                                <description align="center" color="transparent" colored="false" width="126">H&amp;#228;ngt die neuen Werte an</description>
+                              </operator>
+                              <operator activated="true" class="remember" compatibility="8.0.001" expanded="true" height="68" name="Remember (4)" width="90" x="447" y="187">
+                                <parameter key="name" value="exampleset"/>
+                                <parameter key="io_object" value="ExampleSet"/>
+                                <parameter key="store_which" value="1"/>
+                                <parameter key="remove_from_process" value="true"/>
+                              </operator>
+                              <connect from_port="condition" to_op="Join (2)" to_port="right"/>
+                              <connect from_op="Recall (3)" from_port="result" to_op="Join (2)" to_port="left"/>
+                              <connect from_op="Join (2)" from_port="join" to_op="Remember (4)" to_port="store"/>
+                              <portSpacing port="source_condition" spacing="0"/>
+                              <portSpacing port="source_input 1" spacing="0"/>
+                              <portSpacing port="sink_input 1" spacing="0"/>
+                            </process>
+                            <description align="center" color="transparent" colored="false" width="126">Im ersten Durchlauf speichert er nur, ab da wird angeh&amp;#228;ngt</description>
+                          </operator>
+                          <connect from_port="single" to_op="Generate ID (4)" to_port="example set input"/>
+                          <connect from_op="Generate ID (4)" from_port="example set output" to_op="Multiply (8)" to_port="input"/>
+                          <connect from_op="Multiply (8)" from_port="output 1" to_op="Branch (4)" to_port="condition"/>
+                          <portSpacing port="source_single" spacing="0"/>
+                          <portSpacing port="sink_output 1" spacing="0"/>
+                        </process>
+                        <description align="center" color="transparent" colored="false" width="126">Macht aus der Collection ein Exampleset</description>
+                      </operator>
+                      <connect from_port="in 1" to_op="Loop Attributes (3)" to_port="input 1"/>
+                      <connect from_port="in 2" to_op="Loop Attributes (3)" to_port="input 2"/>
+                      <connect from_op="Loop Attributes (3)" from_port="output 1" to_op="Flatten Collection (3)" to_port="collection"/>
+                      <connect from_op="Flatten Collection (3)" from_port="flat" to_op="Loop Collection (2)" to_port="collection"/>
+                      <portSpacing port="source_in 1" spacing="0"/>
+                      <portSpacing port="source_in 2" spacing="0"/>
+                      <portSpacing port="source_in 3" spacing="0"/>
+                      <portSpacing port="sink_out 1" spacing="0"/>
+                    </process>
+                    <description align="center" color="transparent" colored="false" width="126">Die eigentliche Verarbeitung</description>
+                  </operator>
+                  <operator activated="true" class="recall" compatibility="8.0.001" expanded="true" height="68" name="Recall (4)" width="90" x="514" y="34">
+                    <parameter key="name" value="exampleset"/>
+                    <parameter key="io_object" value="ExampleSet"/>
+                    <parameter key="remove_from_store" value="true"/>
+                    <description align="center" color="transparent" colored="false" width="126">Ruft das fertige Exapleset ab</description>
+                  </operator>
+                  <operator activated="true" class="generate_aggregation" compatibility="8.0.001" expanded="true" height="82" name="Generate Aggregation (2)" width="90" x="648" y="34">
+                    <parameter key="attribute_name" value="gesammtbewerung"/>
+                    <parameter key="attribute_filter_type" value="regular_expression"/>
+                    <parameter key="attribute" value=""/>
+                    <parameter key="attributes" value="id|text|games|super"/>
+                    <parameter key="regular_expression" value=".*gewichtet"/>
+                    <parameter key="use_except_expression" value="false"/>
+                    <parameter key="value_type" value="attribute_value"/>
+                    <parameter key="use_value_type_exception" value="false"/>
+                    <parameter key="except_value_type" value="time"/>
+                    <parameter key="block_type" value="attribute_block"/>
+                    <parameter key="use_block_type_exception" value="false"/>
+                    <parameter key="except_block_type" value="value_matrix_row_start"/>
+                    <parameter key="invert_selection" value="false"/>
+                    <parameter key="include_special_attributes" value="true"/>
+                    <parameter key="aggregation_function" value="sum"/>
+                    <parameter key="keep_all" value="true"/>
+                    <parameter key="ignore_missings" value="true"/>
+                    <parameter key="ignore_missing_attributes" value="false"/>
+                    <description align="center" color="transparent" colored="false" width="126">Verrechnet die Stimmungen zu Gesamtwerten</description>
+                  </operator>
+                  <operator activated="true" class="select_attributes" compatibility="8.0.001" expanded="true" height="82" name="Select Attributes (5)" width="90" x="782" y="34">
+                    <parameter key="attribute_filter_type" value="subset"/>
+                    <parameter key="attribute" value=""/>
+                    <parameter key="attributes" value="text|id|gesammtbewerung"/>
+                    <parameter key="use_except_expression" value="false"/>
+                    <parameter key="value_type" value="attribute_value"/>
+                    <parameter key="use_value_type_exception" value="false"/>
+                    <parameter key="except_value_type" value="time"/>
+                    <parameter key="block_type" value="attribute_block"/>
+                    <parameter key="use_block_type_exception" value="false"/>
+                    <parameter key="except_block_type" value="value_matrix_row_start"/>
+                    <parameter key="invert_selection" value="false"/>
+                    <parameter key="include_special_attributes" value="true"/>
+                    <description align="center" color="transparent" colored="false" width="126">L&amp;#246;scht wieder unn&amp;#246;tige Attribute</description>
+                  </operator>
+                  <connect from_port="in 1" to_op="Vorbereitung (2)" to_port="in 1"/>
+                  <connect from_op="Vorbereitung (2)" from_port="out 1" to_op="Verarbeitung (2)" to_port="in 1"/>
+                  <connect from_op="Vorbereitung (2)" from_port="out 2" to_op="Verarbeitung (2)" to_port="in 2"/>
+                  <connect from_op="Recall (4)" from_port="result" to_op="Generate Aggregation (2)" to_port="example set input"/>
+                  <connect from_op="Generate Aggregation (2)" from_port="example set output" to_op="Select Attributes (5)" to_port="example set input"/>
+                  <connect from_op="Select Attributes (5)" from_port="example set output" to_port="out 1"/>
+                  <portSpacing port="source_in 1" spacing="0"/>
+                  <portSpacing port="source_in 2" spacing="0"/>
+                  <portSpacing port="sink_out 1" spacing="0"/>
+                  <portSpacing port="sink_out 2" spacing="0"/>
+                </process>
+                <description align="center" color="transparent" colored="false" width="126">Deutsche Sentimentanalyse</description>
+              </operator>
+              <operator activated="true" class="text:data_to_documents" compatibility="7.5.000" expanded="true" height="68" name="Data to Documents (3)" width="90" x="581" y="85">
+                <parameter key="select_attributes_and_weights" value="false"/>
+                <list key="specify_weights"/>
+              </operator>
+              <operator activated="true" class="collect" compatibility="8.0.001" expanded="true" height="82" name="Collect (4)" width="90" x="715" y="85">
+                <parameter key="unfold" value="false"/>
+              </operator>
+              <operator activated="true" class="flatten_collection" compatibility="8.0.001" expanded="true" height="68" name="Flatten Collection (4)" width="90" x="849" y="85"/>
+              <connect from_port="in 1" to_op="Kommentare Seperieren (2)" to_port="documents 1"/>
+              <connect from_op="Kommentare Seperieren (2)" from_port="word list" to_op="Multiply (6)" to_port="input"/>
+              <connect from_op="Multiply (6)" from_port="output 1" to_port="out 1"/>
+              <connect from_op="Multiply (6)" from_port="output 2" to_op="WordList to Data (9)" to_port="word list"/>
+              <connect from_op="WordList to Data (9)" from_port="example set" to_op="Sentimentanalyse (2)" to_port="in 1"/>
+              <connect from_op="Sentimentanalyse (2)" from_port="out 1" to_op="Data to Documents (3)" to_port="example set"/>
+              <connect from_op="Data to Documents (3)" from_port="documents" to_op="Collect (4)" to_port="input 1"/>
+              <connect from_op="Collect (4)" from_port="collection" to_op="Flatten Collection (4)" to_port="collection"/>
+              <connect from_op="Flatten Collection (4)" from_port="flat" to_port="out 2"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="sink_out 1" spacing="0"/>
+              <portSpacing port="sink_out 2" spacing="0"/>
+              <portSpacing port="sink_out 3" spacing="0"/>
+              <description align="center" color="yellow" colored="false" height="50" resized="false" width="111" x="701" y="177">Datentyp- konvertierungen</description>
+            </process>
+            <description align="center" color="transparent" colored="false" width="126">Zerlegt das Dokument in einzelne Kommentare mit Sentimentanalyse</description>
+          </operator>
+          <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="145" name="Speicher (2)" width="90" x="447" y="34">
+            <process expanded="true">
+              <operator activated="true" class="store" compatibility="8.0.001" expanded="true" height="68" name="Kommentare ohne Bewertungen (2)" width="90" x="447" y="238">
+                <parameter key="repository_entry" value="data/Einzelne Kommentare/Kommentare ohen AnalyseNeu"/>
+              </operator>
+              <operator activated="true" class="store" compatibility="8.0.001" expanded="true" height="68" name="DOWN-Votes" width="90" x="447" y="136">
+                <parameter key="repository_entry" value="data/UP-DOWN-Votes/EVENegativNeu"/>
+              </operator>
+              <operator activated="true" class="store" compatibility="8.0.001" expanded="true" height="68" name="UP-Votes" width="90" x="447" y="34">
+                <parameter key="repository_entry" value="data/UP-DOWN-Votes/EVEPositivNeu"/>
+              </operator>
+              <operator activated="true" class="store" compatibility="8.0.001" expanded="true" height="68" name="Kommentare mit Analyse (2)" width="90" x="447" y="340">
+                <parameter key="repository_entry" value="data/Einzelne Kommentare/Kommentare mit AnalyseNeu"/>
+              </operator>
+              <connect from_port="in 1" to_op="UP-Votes" to_port="input"/>
+              <connect from_port="in 2" to_op="DOWN-Votes" to_port="input"/>
+              <connect from_port="in 3" to_op="Kommentare ohne Bewertungen (2)" to_port="input"/>
+              <connect from_port="in 4" to_op="Kommentare mit Analyse (2)" to_port="input"/>
+              <connect from_op="Kommentare ohne Bewertungen (2)" from_port="through" to_port="out 3"/>
+              <connect from_op="DOWN-Votes" from_port="through" to_port="out 2"/>
+              <connect from_op="UP-Votes" from_port="through" to_port="out 1"/>
+              <connect from_op="Kommentare mit Analyse (2)" from_port="through" to_port="out 4"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="source_in 3" spacing="0"/>
+              <portSpacing port="source_in 4" spacing="0"/>
+              <portSpacing port="source_in 5" spacing="0"/>
+              <portSpacing port="sink_out 1" spacing="0"/>
+              <portSpacing port="sink_out 2" spacing="0"/>
+              <portSpacing port="sink_out 3" spacing="0"/>
+              <portSpacing port="sink_out 4" spacing="0"/>
+              <portSpacing port="sink_out 5" spacing="0"/>
+            </process>
+            <description align="center" color="transparent" colored="false" width="126">Verschiedene Zwischenspeicher f&amp;#252;r die Daten</description>
+          </operator>
+          <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="145" name="Konverter (2)" width="90" x="581" y="34">
+            <process expanded="true">
+              <operator activated="true" class="text:wordlist_to_data" compatibility="7.5.000" expanded="true" height="82" name="WordList to Data (5)" width="90" x="447" y="391"/>
+              <operator activated="true" class="text:wordlist_to_data" compatibility="7.5.000" expanded="true" height="82" name="WordList to Data (7)" width="90" x="447" y="85"/>
+              <operator activated="true" class="text:documents_to_data" compatibility="7.5.000" expanded="true" height="82" name="Documents to Data (5)" width="90" x="447" y="493">
+                <parameter key="text_attribute" value="text1"/>
+                <parameter key="add_meta_information" value="true"/>
+                <parameter key="datamanagement" value="double_sparse_array"/>
+                <parameter key="data_management" value="auto"/>
+              </operator>
+              <operator activated="true" class="text:wordlist_to_data" compatibility="7.5.000" expanded="true" height="82" name="WordList to Data (8)" width="90" x="447" y="187"/>
+              <operator activated="true" class="append" compatibility="8.0.001" expanded="true" height="103" name="Append (2)" width="90" x="648" y="187">
+                <parameter key="datamanagement" value="double_array"/>
+                <parameter key="data_management" value="auto"/>
+                <parameter key="merge_type" value="all"/>
+              </operator>
+              <connect from_port="in 1" to_op="WordList to Data (7)" to_port="word list"/>
+              <connect from_port="in 2" to_op="WordList to Data (8)" to_port="word list"/>
+              <connect from_port="in 3" to_op="WordList to Data (5)" to_port="word list"/>
+              <connect from_port="in 4" to_op="Documents to Data (5)" to_port="documents 1"/>
+              <connect from_op="WordList to Data (5)" from_port="example set" to_port="out 2"/>
+              <connect from_op="WordList to Data (7)" from_port="example set" to_op="Append (2)" to_port="example set 1"/>
+              <connect from_op="Documents to Data (5)" from_port="example set" to_port="out 3"/>
+              <connect from_op="WordList to Data (8)" from_port="example set" to_op="Append (2)" to_port="example set 2"/>
+              <connect from_op="Append (2)" from_port="merged set" to_port="out 1"/>
+              <portSpacing port="source_in 1" spacing="0"/>
+              <portSpacing port="source_in 2" spacing="0"/>
+              <portSpacing port="source_in 3" spacing="0"/>
+              <portSpacing port="source_in 4" spacing="0"/>
+              <portSpacing port="source_in 5" spacing="0"/>
+              <portSpacing port="sink_out 1" spacing="0"/>
+              <portSpacing port="sink_out 2" spacing="0"/>
+              <portSpacing port="sink_out 3" spacing="0"/>
+              <portSpacing port="sink_out 4" spacing="0"/>
+              <description align="center" color="yellow" colored="false" height="50" resized="false" width="177" x="427" y="28">Datenkonvertierungen f&amp;#252;r Exceleintr&amp;#228;ge f&amp;#252;r die Votes</description>
+              <description align="center" color="yellow" colored="false" height="50" resized="false" width="216" x="395" y="317">Datenkonvertierungen f&amp;#252;r Exceleintr&amp;#228;ge f&amp;#252;r die Kommentare</description>
+            </process>
+            <description align="center" color="transparent" colored="false" width="126">Konvertierungen f&amp;#252;r Excel</description>
+          </operator>
+          <connect from_port="in 1" to_op="SteamCrawler (2)" to_port="in 1"/>
+          <connect from_op="SteamCrawler (2)" from_port="out 1" to_op="Multiply (4)" to_port="input"/>
+          <connect from_op="Multiply (4)" from_port="output 1" to_op="Up/Down-Votes (3)" to_port="in 1"/>
+          <connect from_op="Multiply (4)" from_port="output 2" to_op="Bewertungen (2)" to_port="in 1"/>
+          <connect from_op="Up/Down-Votes (3)" from_port="out 1" to_op="Speicher (2)" to_port="in 1"/>
+          <connect from_op="Up/Down-Votes (3)" from_port="out 2" to_op="Speicher (2)" to_port="in 2"/>
+          <connect from_op="Bewertungen (2)" from_port="out 1" to_op="Speicher (2)" to_port="in 3"/>
+          <connect from_op="Bewertungen (2)" from_port="out 2" to_op="Speicher (2)" to_port="in 4"/>
+          <connect from_op="Speicher (2)" from_port="out 1" to_op="Konverter (2)" to_port="in 1"/>
+          <connect from_op="Speicher (2)" from_port="out 2" to_op="Konverter (2)" to_port="in 2"/>
+          <connect from_op="Speicher (2)" from_port="out 3" to_op="Konverter (2)" to_port="in 3"/>
+          <connect from_op="Speicher (2)" from_port="out 4" to_op="Konverter (2)" to_port="in 4"/>
+          <connect from_op="Konverter (2)" from_port="out 1" to_port="out 1"/>
+          <connect from_op="Konverter (2)" from_port="out 2" to_port="out 2"/>
+          <connect from_op="Konverter (2)" from_port="out 3" to_port="out 3"/>
+          <portSpacing port="source_in 1" spacing="0"/>
+          <portSpacing port="source_in 2" spacing="0"/>
+          <portSpacing port="sink_out 1" spacing="0"/>
+          <portSpacing port="sink_out 2" spacing="0"/>
+          <portSpacing port="sink_out 3" spacing="0"/>
+          <portSpacing port="sink_out 4" spacing="0"/>
+        </process>
+        <description align="center" color="transparent" colored="false" width="126">Gleicher Inhalt wie Alt Komments nur andere Parameter im SteamCrawler</description>
+      </operator>
+      <operator activated="true" class="subprocess" compatibility="8.0.001" expanded="true" height="187" name="In Excel Speichern" width="90" x="648" y="85">
+        <process expanded="true">
+          <operator activated="true" class="append" compatibility="8.0.001" expanded="true" height="103" name="Append (4)" width="90" x="313" y="34">
+            <parameter key="datamanagement" value="double_array"/>
+            <parameter key="data_management" value="auto"/>
+            <parameter key="merge_type" value="all"/>
+          </operator>
+          <operator activated="true" class="write_excel" compatibility="8.0.001" expanded="true" height="82" name="VotesGesamt" width="90" x="447" y="34">
+            <parameter key="excel_file" value="C:\Users\lp_ontour\Desktop\VotesGesamt.xlsx"/>
+            <parameter key="file_format" value="xlsx"/>
+            <parameter key="encoding" value="SYSTEM"/>
+            <parameter key="sheet_name" value="RapidMiner Data"/>
+            <parameter key="date_format" value="yyyy-MM-dd HH:mm:ss"/>
+            <parameter key="number_format" value="#.0"/>
+          </operator>
+          <operator activated="true" class="write_excel" compatibility="8.0.001" expanded="true" height="82" name="Kommentarealt" width="90" x="447" y="136">
+            <parameter key="excel_file" value="C:\Users\lp_ontour\Desktop\Kommentarealt.xlsx"/>
+            <parameter key="file_format" value="xlsx"/>
+            <parameter key="encoding" value="SYSTEM"/>
+            <parameter key="sheet_name" value="RapidMiner Data"/>
+            <parameter key="date_format" value="yyyy-MM-dd HH:mm:ss"/>
+            <parameter key="number_format" value="#.0"/>
+          </operator>
+          <operator activated="true" class="write_excel" compatibility="8.0.001" expanded="true" height="82" name="Sentiment Analysealt" width="90" x="447" y="238">
+            <parameter key="excel_file" value="C:\Users\lp_ontour\Desktop\Kommentare mit Analysalt.xlsx"/>
+            <parameter key="file_format" value="xlsx"/>
+            <parameter key="encoding" value="SYSTEM"/>
+            <parameter key="sheet_name" value="RapidMiner Data"/>
+            <parameter key="date_format" value="yyyy-MM-dd HH:mm:ss"/>
+            <parameter key="number_format" value="#.0"/>
+          </operator>
+          <operator activated="true" class="write_excel" compatibility="8.0.001" expanded="true" height="82" name="Kommentareneu" width="90" x="447" y="340">
+            <parameter key="excel_file" value="C:\Users\lp_ontour\Desktop\Kommentareneu.xlsx"/>
+            <parameter key="file_format" value="xlsx"/>
+            <parameter key="encoding" value="SYSTEM"/>
+            <parameter key="sheet_name" value="RapidMiner Data"/>
+            <parameter key="date_format" value="yyyy-MM-dd HH:mm:ss"/>
+            <parameter key="number_format" value="#.0"/>
+          </operator>
+          <operator activated="true" class="write_excel" compatibility="8.0.001" expanded="true" height="82" name="Sentiment Analyseneu" width="90" x="447" y="442">
+            <parameter key="excel_file" value="C:\Users\lp_ontour\Desktop\Kommentare mit Analysneu.xlsx"/>
+            <parameter key="file_format" value="xlsx"/>
+            <parameter key="encoding" value="SYSTEM"/>
+            <parameter key="sheet_name" value="RapidMiner Data"/>
+            <parameter key="date_format" value="yyyy-MM-dd HH:mm:ss"/>
+            <parameter key="number_format" value="#.0"/>
+          </operator>
+          <connect from_port="in 1" to_op="Append (4)" to_port="example set 1"/>
+          <connect from_port="in 2" to_op="Append (4)" to_port="example set 2"/>
+          <connect from_port="in 3" to_op="Kommentarealt" to_port="input"/>
+          <connect from_port="in 4" to_op="Sentiment Analysealt" to_port="input"/>
+          <connect from_port="in 5" to_op="Kommentareneu" to_port="input"/>
+          <connect from_port="in 6" to_op="Sentiment Analyseneu" to_port="input"/>
+          <connect from_op="Append (4)" from_port="merged set" to_op="VotesGesamt" to_port="input"/>
+          <connect from_op="VotesGesamt" from_port="through" to_port="out 1"/>
+          <connect from_op="Kommentarealt" from_port="through" to_port="out 2"/>
+          <connect from_op="Sentiment Analysealt" from_port="through" to_port="out 3"/>
+          <connect from_op="Kommentareneu" from_port="through" to_port="out 4"/>
+          <connect from_op="Sentiment Analyseneu" from_port="through" to_port="out 5"/>
+          <portSpacing port="source_in 1" spacing="0"/>
+          <portSpacing port="source_in 2" spacing="0"/>
+          <portSpacing port="source_in 3" spacing="0"/>
+          <portSpacing port="source_in 4" spacing="0"/>
+          <portSpacing port="source_in 5" spacing="0"/>
+          <portSpacing port="source_in 6" spacing="0"/>
+          <portSpacing port="source_in 7" spacing="0"/>
+          <portSpacing port="sink_out 1" spacing="0"/>
+          <portSpacing port="sink_out 2" spacing="0"/>
+          <portSpacing port="sink_out 3" spacing="0"/>
+          <portSpacing port="sink_out 4" spacing="0"/>
+          <portSpacing port="sink_out 5" spacing="0"/>
+          <portSpacing port="sink_out 6" spacing="0"/>
+        </process>
+        <description align="center" color="transparent" colored="false" width="126">Speichert die Ergebnisse in Excel</description>
+      </operator>
+      <connect from_port="input 1" to_op="Alt Komments" to_port="in 1"/>
+      <connect from_port="input 2" to_op="Neu Komments" to_port="in 1"/>
+      <connect from_op="Alt Komments" from_port="out 1" to_op="In Excel Speichern" to_port="in 1"/>
+      <connect from_op="Alt Komments" from_port="out 2" to_op="In Excel Speichern" to_port="in 3"/>
+      <connect from_op="Alt Komments" from_port="out 3" to_op="In Excel Speichern" to_port="in 4"/>
+      <connect from_op="Neu Komments" from_port="out 1" to_op="In Excel Speichern" to_port="in 2"/>
+      <connect from_op="Neu Komments" from_port="out 2" to_op="In Excel Speichern" to_port="in 5"/>
+      <connect from_op="Neu Komments" from_port="out 3" to_op="In Excel Speichern" to_port="in 6"/>
+      <connect from_op="In Excel Speichern" from_port="out 1" to_port="result 1"/>
+      <connect from_op="In Excel Speichern" from_port="out 2" to_port="result 2"/>
+      <connect from_op="In Excel Speichern" from_port="out 3" to_port="result 3"/>
+      <connect from_op="In Excel Speichern" from_port="out 4" to_port="result 4"/>
+      <connect from_op="In Excel Speichern" from_port="out 5" to_port="result 5"/>
+      <portSpacing port="source_input 1" spacing="0"/>
+      <portSpacing port="source_input 2" spacing="0"/>
+      <portSpacing port="source_input 3" spacing="0"/>
+      <portSpacing port="sink_result 1" spacing="0"/>
+      <portSpacing port="sink_result 2" spacing="0"/>
+      <portSpacing port="sink_result 3" spacing="0"/>
+      <portSpacing port="sink_result 4" spacing="0"/>
+      <portSpacing port="sink_result 5" spacing="0"/>
+      <portSpacing port="sink_result 6" spacing="0"/>
+      <description align="center" color="yellow" colored="false" height="50" resized="true" width="431" x="302" y="30">Sentimentanalyse f&amp;#252;r Kommentare auf Steam, vor einem Event und nach einem Event f&amp;#252;r eine sp&amp;#228;tere Gegen&amp;#252;berstellung</description>
+    </process>
+  </operator>
+</process>
